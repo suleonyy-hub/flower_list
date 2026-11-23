@@ -1,0 +1,3651 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2C4A52">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>參拜宮廟蓮花統計工具 v13.0</title>
+<style>
+  :root {
+    --primary: #2C4A52;
+    --primary-light: #466A73;
+    --primary-bg: #EBF2F2;
+    --bg: #F4F6F7;
+    --card: #FFFFFF;
+    --text: #1F2933;
+    --muted: #52606D;
+    --border: #D5DFE2;
+    --accent: #B87D4B;
+    --accent-bg: #F4EFE6;
+    --danger: #C0392B;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    line-height: 1.45;
+  }
+
+  /* Header */
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 14px 16px 10px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 960px;
+    margin: 0 auto 10px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .title-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .version-tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    background: rgba(255,255,255,0.16);
+    padding: 1px 7px;
+    border-radius: 10px;
+    letter-spacing: 0.3px;
+  }
+  .badge-count {
+    background: rgba(255,255,255,0.2);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+  }
+  .tabs {
+    display: flex;
+    gap: 6px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .tab-btn {
+    flex: 1;
+    border: none;
+    background: rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.88);
+    padding: 9px 6px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab-btn.active {
+    background: #fff;
+    color: var(--primary);
+  }
+
+  /* Main container */
+  main {
+    max-width: 960px;
+    margin: 14px auto;
+    padding: 0 12px;
+  }
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0 0 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* Metadata Grid */
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--text);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(44,74,82,0.12);
+  }
+
+  /* Filter Toolbar */
+  .toolbar-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+    align-items: center;
+    justify-content: space-between;
+  }
+  .toolbar-left, .toolbar-right {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .result-count {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  /* Add Item Selector Bar */
+  .picker-card {
+    background: #EDF4F4;
+    border: 1.5px solid var(--primary);
+  }
+  .picker-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .picker-row select {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1.5px solid var(--primary);
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    background: #fff;
+    color: var(--text);
+  }
+  .picker-hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* Empty Form Placeholder */
+  .empty-items-box {
+    text-align: center;
+    padding: 28px 16px;
+    background: #fff;
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+
+  /* Item Card */
+  .item-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    border: 1.5px solid var(--primary);
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(44,74,82,0.08);
+  }
+  .item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 14px;
+    background: #DCE9EC;
+    cursor: pointer;
+    user-select: none;
+    flex-wrap: wrap;
+  }
+  .item-name-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 150px;
+  }
+  .item-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .seq-badge {
+    background: var(--primary);
+    color: #fff;
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 12px;
+    font-weight: 700;
+  }
+  .item-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Stepper */
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff;
+    border-radius: 8px;
+    padding: 3px;
+    border: 1px solid var(--border);
+  }
+  .step-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: var(--primary-bg);
+    color: var(--primary);
+    font-size: 17px;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step-btn:active { background: var(--primary); color: #fff; }
+  .step-val {
+    min-width: 24px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .icon-btn {
+    border: none;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .icon-btn-copy { background: #fff; color: var(--primary); border: 1px solid var(--border); }
+  .icon-btn-del { background: #FDEDEC; color: var(--danger); }
+
+  .item-body {
+    padding: 12px 14px;
+    display: none;
+  }
+  .item-card.open .item-body {
+    display: block;
+  }
+
+  /* Part Row */
+  .part-block {
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .part-block:last-of-type { border-bottom: none; }
+  .part-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .part-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .part-hint {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-left: 6px;
+  }
+  .same-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary);
+    background: var(--primary-bg);
+    padding: 4px 10px;
+    border-radius: 16px;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .same-toggle.active {
+    background: var(--primary);
+    color: #fff;
+  }
+
+
+  /* Petal Numbered Slots (富貴蓮 4片 / 掌心蓮 8片) */
+  .slot-controls-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .slot-progress {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 12px;
+    background: var(--accent-bg);
+    color: var(--accent);
+  }
+  .slot-progress.full {
+    background: #D4EFDF;
+    color: #1E8449;
+  }
+  .slot-btn-row {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .slot-mini-btn {
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .slot-mini-btn:active {
+    background: var(--primary);
+    color: #fff;
+  }
+  .slot-mini-btn.accent {
+    background: var(--primary-bg);
+    border-color: var(--primary);
+  }
+  .petal-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  @media (min-width: 640px) {
+    .petal-slots-grid.slots-8 {
+      grid-template-columns: repeat(8, 1fr);
+    }
+  }
+  .petal-slot {
+    position: relative;
+    border: 1.5px dashed #94A3B8;
+    border-radius: 9px;
+    padding: 6px 4px;
+    min-height: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #F8FAFC;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.12s;
+  }
+  .petal-slot.filled {
+    border-style: solid;
+    border-color: #94A3B8;
+  }
+  .petal-slot.active-target {
+    border-style: solid;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2.5px rgba(44,74,82,0.28);
+  }
+  .petal-slot-num {
+    font-size: 10px;
+    font-weight: 700;
+    opacity: 0.78;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+  .petal-slot-val {
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+  .petal-slot-empty-txt {
+    font-size: 11px;
+    color: #94A3B8;
+    font-weight: 500;
+  }
+
+  /* 13 Color Chips Grid */
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+  @media (min-width: 720px) {
+    .color-grid { grid-template-columns: repeat(13, 1fr); }
+  }
+  .color-chip {
+    position: relative;
+    border: 1.5px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 7px 2px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.08s, box-shadow 0.12s;
+  }
+  .color-chip:active { transform: scale(0.95); }
+  .color-chip.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary);
+  }
+  .color-chip .mark-badge {
+    position: absolute;
+    top: -7px;
+    right: -5px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 19px;
+    height: 19px;
+    line-height: 19px;
+    border-radius: 10px;
+    padding: 0 4px;
+    border: 1.5px solid #fff;
+    display: none;
+  }
+  .color-chip.selected .mark-badge { display: block; }
+  .color-grid.disabled {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  .item-note-input {
+    width: 100%;
+    margin-top: 8px;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+
+  /* Top Sticky Form Action Bar (avoids overlapping Android bottom nav bar) */
+  .top-action-bar {
+    background: #FFFFFF;
+    border-bottom: 1.5px solid var(--border);
+    padding: 8px 14px;
+    position: sticky;
+    top: 94px;
+    z-index: 95;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+  .top-action-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  /* Inline Form Bottom Action Card (normal flow, well above Android nav bar) */
+  .form-submit-card {
+    background: #FFFFFF;
+    border: 1.5px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-top: 4px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    box-shadow: 0 2px 8px rgba(44,74,82,0.08);
+  }
+  .total-pill {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .total-pill span {
+    font-size: 18px;
+    color: var(--accent);
+    margin: 0 3px;
+  }
+  .btn-group { display: flex; gap: 8px; }
+
+  .btn {
+    border: none;
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:active { background: #1e353b; }
+  .btn-secondary { background: var(--primary-bg); color: var(--primary); }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-danger { background: #FDEDEC; color: var(--danger); }
+  .btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--border); }
+  .btn-sm { padding: 6px 10px; font-size: 12px; }
+
+  /* Records List */
+  .record-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .record-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .record-title { font-size: 16px; font-weight: 700; color: var(--primary); }
+  .record-meta { font-size: 12px; color: var(--muted); }
+  .record-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .tag {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 12px;
+  }
+  .record-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  /* Summary Table */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .kpi-box {
+    background: var(--accent-bg);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+  .kpi-num { font-size: 22px; font-weight: 800; color: var(--primary); }
+  .kpi-lbl { font-size: 12px; color: var(--muted); }
+
+  table.sum-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  table.sum-table th, table.sum-table td {
+    border: 1px solid var(--border);
+    padding: 8px;
+    text-align: left;
+    vertical-align: top;
+  }
+  table.sum-table th {
+    background: var(--primary);
+    color: #fff;
+    text-align: center;
+  }
+  table.sum-table td.num { text-align: center; font-weight: 700; color: var(--primary); }
+
+  .color-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  @media (min-width: 640px) {
+    .color-stat-grid { grid-template-columns: repeat(7, 1fr); }
+  }
+  .color-stat-item {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .color-stat-item .c-cnt { font-size: 16px; display: block; margin-top: 2px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 36px 16px;
+    color: var(--muted);
+  }
+  .toast {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(31,41,51,0.92);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 1200;
+    display: none;
+    max-width: 90%;
+    text-align: center;
+  }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.52);
+    z-index: 1100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal-box {
+    background: #fff;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.22);
+  }
+  .modal-header {
+    background: var(--primary);
+    color: #fff;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .modal-close {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .modal-body {
+    padding: 14px 16px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .modal-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    background: #F8FAFA;
+  }
+  .history-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .history-info { flex: 1; min-width: 0; }
+  .history-title { font-size: 14px; font-weight: 700; color: var(--primary); }
+  .history-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .cloud-btn {
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.35);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: inherit;
+  }
+  .cloud-btn:active { background: rgba(255,255,255,0.32); }
+  .cloud-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #CBD5E1;
+    display: inline-block;
+  }
+  .cloud-dot.ok { background: #4ADE80; }
+  .cloud-dot.busy { background: #FBBF24; }
+  .cloud-dot.err { background: #F87171; }
+  .sync-status-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 10px 0;
+  }
+  .sync-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  @media (min-width: 480px) {
+    .sync-actions-grid { grid-template-columns: 1fr 1fr; }
+    .sync-actions-grid .span-2 { grid-column: span 2; }
+  }
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-top: 8px;
+    cursor: pointer;
+  }
+  .checkbox-row input { width: 17px; height: 17px; margin: 0; }
+  .code-details {
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: #F8FAFA;
+  }
+  .code-details summary {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary);
+    cursor: pointer;
+  }
+  .code-pre {
+    background: #1E293B;
+    color: #E2E8F0;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    overflow-x: auto;
+    max-height: 180px;
+    margin: 8px 0;
+    white-space: pre;
+    font-family: Consolas, Monaco, monospace;
+  }
+
+
+  /* A4 Print Preview Modal & Dedicated Print Sheet */
+  .a4-modal-box {
+    max-width: 860px;
+    max-height: 92vh;
+  }
+  .a4-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #EDF4F4;
+    border-bottom: 1px solid var(--border);
+  }
+  .a4-options {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+  }
+  .a4-options label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+  }
+  .a4-preview-scroll {
+    background: #CBD5E1;
+    padding: 14px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .a4-paper {
+    background: #fff;
+    width: 100%;
+    max-width: 210mm;
+    min-height: 260mm;
+    margin: 0 auto;
+    padding: 14mm 12mm;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+    color: #111827;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  @media (max-width: 600px) {
+    .a4-preview-scroll { padding: 8px; }
+    .a4-paper { padding: 14px 12px; min-height: auto; }
+  }
+  .a4-doc-header {
+    border-bottom: 2.5px solid #2C4A52;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .a4-doc-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #2C4A52;
+    margin: 0;
+  }
+  .a4-doc-sub {
+    font-size: 12px;
+    color: #4B5563;
+  }
+  .a4-meta-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    background: #F4F7F7;
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+  @media (max-width: 520px) {
+    .a4-meta-bar { grid-template-columns: repeat(2, 1fr); }
+  }
+  .a4-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+    font-size: 12.5px;
+  }
+  .a4-table th, .a4-table td {
+    border: 1px solid #94A3B8;
+    padding: 6px 8px;
+    text-align: left;
+    vertical-align: middle;
+  }
+  .a4-table th {
+    background: #2C4A52;
+    color: #fff;
+    text-align: center;
+    font-weight: 700;
+  }
+  .a4-table td.c { text-align: center; }
+  .a4-table tr:nth-child(even) td { background: #F8FAFA; }
+  .a4-note-box {
+    border: 1px solid #94A3B8;
+    border-radius: 6px;
+    padding: 8px 10px;
+    background: #FAFAFA;
+    font-size: 12.5px;
+    margin-bottom: 12px;
+  }
+  .a4-color-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 520px) {
+    .a4-color-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  .a4-color-cell {
+    border: 1px solid #94A3B8;
+    border-radius: 5px;
+    padding: 4px;
+    text-align: center;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .a4-record-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 18px;
+  }
+  .a4-page-break {
+    break-before: page;
+    page-break-before: always;
+  }
+  .a4-footer-sign {
+    margin-top: 14px;
+    padding-top: 8px;
+    border-top: 1px dashed #94A3B8;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #4B5563;
+  }
+  #a4PrintRoot { display: none; }
+
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+  @media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    header, main, .top-action-bar, .no-print, .modal-backdrop, .toast { display: none !important; }
+    body { background: #fff !important; padding: 0 !important; margin: 0 !important; }
+    #a4PrintRoot {
+      display: block !important;
+      width: 100% !important;
+    }
+    #a4PrintRoot .a4-paper {
+      box-shadow: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      max-width: 100% !important;
+      min-height: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="title-wrap">
+      <h1>🪷 蓮花樣式顏色統計工具</h1>
+      <span class="version-tag" id="appVersionTag">v13.0</span>
+    </div>
+    <div class="header-right">
+      <button type="button" class="cloud-btn" onclick="openCloudModal()" title="Google 試算表雲端同步">
+        <span class="cloud-dot" id="cloudDot"></span>☁️ 雲端同步
+      </button>
+      <span class="badge-count" id="headerCount">已存 0 筆</span>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('form')">✏️ 個人登記</button>
+    <button class="tab-btn" onclick="switchTab('records')">📋 查詢與紀錄</button>
+    <button class="tab-btn" onclick="switchTab('summary')">📊 彙整總計</button>
+  </div>
+</header>
+
+<!-- Top Sticky Quick Action Bar (only on form view; never overlaps Android back button) -->
+<div class="top-action-bar no-print" id="formTopActionBar">
+  <div class="top-action-inner">
+    <div class="total-pill">本單合計 <span id="liveTotalQtyTop">0</span> 件</div>
+    <div class="btn-group">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="resetForm()">清空</button>
+      <button type="button" class="btn btn-primary btn-sm" id="saveBtnTop" onclick="saveCurrentRecord()">💾 儲存紀錄</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<main>
+  <!-- VIEW 1: ENTRY FORM -->
+  <section id="view-form" class="view active">
+    <div class="card">
+      <div class="card-title">
+        <span>基本資料（單人填寫）</span>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="openA4PrintCurrentForm()">📄 轉成 A4 PDF</button>
+          <button type="button" class="btn btn-accent btn-sm" onclick="openHistoryCopyModal()">📂 複製歷史紀錄</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="loadSampleFu()">載入城隍廟範例</button>
+        </div>
+      </div>
+      <div class="meta-grid">
+        <div class="field">
+          <label>參拜宮廟</label>
+          <input type="text" id="metaTemple" placeholder="例如：城隍廟" list="templeList">
+          <datalist id="templeList"></datalist>
+        </div>
+        <div class="field">
+          <label>填表人姓名</label>
+          <input type="text" id="metaPerson" placeholder="例如：傅">
+        </div>
+        <div class="field">
+          <label>參拜日期</label>
+          <input type="date" id="metaDate">
+        </div>
+      </div>
+    </div>
+
+    <!-- Dynamic Style/Item Picker -->
+    <div class="card picker-card">
+      <div class="card-title" style="margin-bottom:8px;">
+        <span>選擇樣式／品項並新增欄位</span>
+      </div>
+      <div class="picker-row">
+        <select id="itemPickerSelect"></select>
+        <button type="button" class="btn btn-primary" onclick="addSelectedItem()">＋ 新增品項</button>
+      </div>
+      <div class="picker-hint">💡 需要哪種花再新增即可；同一種樣式若需要「不同配色」，可重複新增多張卡片分別勾選。</div>
+    </div>
+
+    <div id="itemsContainer"></div>
+
+    <div class="card">
+      <div class="card-title">其他需求／備註</div>
+      <div class="field">
+        <textarea id="metaNote" rows="2" placeholder="若有特殊備註（例如：玉源/九元、特殊配色說明）請填寫於此"></textarea>
+      </div>
+    </div>
+
+    <div class="form-submit-card no-print">
+      <div class="total-pill">本單合計 <span id="liveTotalQtyBottom">0</span> 件</div>
+      <div class="btn-group">
+        <button type="button" class="btn btn-secondary" onclick="resetForm()">清空表單</button>
+        <button type="button" class="btn btn-primary" id="saveBtnBottom" onclick="saveCurrentRecord()">💾 儲存紀錄</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIEW 2: SAVED RECORDS & QUERY -->
+  <section id="view-records" class="view">
+    <div class="card no-print">
+      <div class="card-title" style="margin-bottom:8px;">
+        <span>🔍 查詢其他宮廟與日期紀錄</span>
+        <button type="button" class="btn btn-outline btn-sm" onclick="clearRecordFilters()">清除條件</button>
+      </div>
+      <div class="meta-grid">
+        <div class="field">
+          <label>參拜宮廟</label>
+          <select id="filterTempleRecords" onchange="renderRecords()">
+            <option value="">全部宮廟</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>參拜日期</label>
+          <select id="filterDateRecords" onchange="renderRecords()">
+            <option value="">全部日期</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>關鍵字查詢（姓名／品項／備註）</label>
+          <input type="text" id="filterKeywordRecords" placeholder="輸入姓名或關鍵字..." oninput="renderRecords()">
+        </div>
+      </div>
+      <div class="toolbar-actions">
+        <div class="toolbar-left">
+          <span class="result-count" id="recordsResultCount">共 0 筆紀錄</span>
+        </div>
+        <div class="toolbar-right">
+          <button type="button" class="btn btn-primary btn-sm" onclick="openA4PrintFilteredRecords()">📄 匯出查詢 PDF</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="openCloudModal()">☁️ Google 同步</button>
+          <button type="button" class="btn btn-accent btn-sm" onclick="openBatchCopyModal()">📑 整批複製到新宮廟／日期</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="exportBackupJSON()">備份 (JSON)</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()">還原備份</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importBackupJSON(event)">
+        </div>
+      </div>
+    </div>
+    <div id="recordsList"></div>
+  </section>
+
+  <!-- VIEW 3: SUMMARY -->
+  <section id="view-summary" class="view">
+    <div class="card no-print">
+      <div class="meta-grid" style="align-items:end;">
+        <div class="field">
+          <label>統計宮廟</label>
+          <select id="filterTempleSummary" onchange="renderSummary()">
+            <option value="">全部宮廟</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>統計日期</label>
+          <select id="filterDateSummary" onchange="renderSummary()">
+            <option value="">全部日期</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-accent btn-sm" onclick="exportCSV()">📥 匯出 Excel (CSV)</button>
+          <button class="btn btn-primary btn-sm" onclick="openA4PrintSummary()">📄 匯出總計 PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="summaryContent"></div>
+  </section>
+</main>
+
+
+
+<!-- MODAL 1: Quick Copy History Record into Form -->
+<div class="modal-backdrop" id="historyCopyModal" onclick="if(event.target===this) closeModal('historyCopyModal')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>📂 查詢並複製其他宮廟／日期紀錄</span>
+      <button type="button" class="modal-close" onclick="closeModal('historyCopyModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="meta-grid" style="margin-bottom:10px;">
+        <div class="field">
+          <label>篩選宮廟</label>
+          <select id="modalFilterTemple" onchange="renderHistoryCopyList()"></select>
+        </div>
+        <div class="field">
+          <label>篩選日期</label>
+          <select id="modalFilterDate" onchange="renderHistoryCopyList()"></select>
+        </div>
+        <div class="field">
+          <label>姓名搜尋</label>
+          <input type="text" id="modalFilterKey" placeholder="輸入姓名..." oninput="renderHistoryCopyList()">
+        </div>
+      </div>
+      <div id="historyCopyList"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('historyCopyModal')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 2: Batch Copy Filtered Records to New Temple / Date -->
+<div class="modal-backdrop" id="batchCopyModal" onclick="if(event.target===this) closeModal('batchCopyModal')">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-header">
+      <span>📑 整批複製紀錄到新宮廟／日期</span>
+      <button type="button" class="modal-close" onclick="closeModal('batchCopyModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="batchCopySummaryText" style="margin:0 0 12px; font-size:13px; color:var(--primary); font-weight:700;"></p>
+      <div class="field" style="margin-bottom:10px;">
+        <label>新參拜宮廟名稱</label>
+        <input type="text" id="batchTargetTemple" placeholder="例如：天后宮（留空則保留原宮廟）" list="templeList">
+      </div>
+      <div class="field">
+        <label>新參拜日期</label>
+        <input type="date" id="batchTargetDate">
+      </div>
+      <p style="margin:10px 0 0; font-size:12px; color:var(--muted);">※ 原有紀錄會完整保留，複製出的新紀錄可再個別編輯調整。</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('batchCopyModal')">取消</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick="confirmBatchCopy()">確認整批複製</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL 3: Google Sheets Cloud Sync -->
+<div class="modal-backdrop" id="cloudSyncModal" onclick="if(event.target===this) closeModal('cloudSyncModal')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>☁️ Google 試算表雲端同步（個人帳號）</span>
+      <button type="button" class="modal-close" onclick="closeModal('cloudSyncModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:10px;">
+        <label>Google Apps Script 網頁應用程式網址</label>
+        <input type="url" id="cloudUrlInput" placeholder="https://script.google.com/macros/s/....../exec">
+      </div>
+      <div class="field">
+        <label>個人同步密碼（選填，需與腳本內的 SYNC_TOKEN 一致）</label>
+        <input type="password" id="cloudTokenInput" placeholder="若腳本未設密碼可留空">
+      </div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="cloudAutoSyncChk">
+        <span>每次「儲存／整批複製」時自動上傳同步到 Google 試算表</span>
+      </label>
+
+      <div class="sync-status-box" id="cloudStatusBox">
+        尚未設定雲端同步網址。
+      </div>
+
+      <div class="sync-actions-grid">
+        <button type="button" class="btn btn-primary span-2" id="btnSyncMerge" onclick="cloudSyncMerge()">🔄 雙向合併同步（推薦：保留最新紀錄）</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="saveAndTestCloud()">🔗 儲存設定並測試連線</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="cloudPullOverwrite()">⬇️ 雲端覆蓋本機</button>
+        <button type="button" class="btn btn-outline btn-sm span-2" onclick="cloudPushOverwrite()">⬆️ 本機覆蓋雲端（刪除紀錄後同步用）</button>
+      </div>
+
+      <details class="code-details">
+        <summary>📖 第一次設定？點此展開 Google Apps Script 程式碼</summary>
+        <p style="font-size:12px; color:var(--muted); margin:6px 0;">
+          1. 在個人 Google 雲端硬碟建立一份新「Google 試算表」。<br>
+          2. 上方選單點「擴充功能」→「Apps Script」，清空原本內容並貼上以下程式碼後按儲存。<br>
+          3. 點右上角「部署」→「新增部署作業」→ 類型選「網頁應用程式」→ 誰可以存取選「<b>所有人</b>」→ 按部署並完成授權，複製網址貼回上方即可。
+        </p>
+        <button type="button" class="btn btn-accent btn-sm" onclick="copyGasCode()">📋 一鍵複製程式碼</button>
+        <pre class="code-pre" id="gasCodePre"></pre>
+      </details>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('cloudSyncModal')">關閉</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL 4: A4 PDF Preview & Direct Download -->
+<div class="modal-backdrop" id="a4PrintModal" onclick="if(event.target===this) closeModal('a4PrintModal')">
+  <div class="modal-box a4-modal-box">
+    <div class="modal-header">
+      <span id="a4ModalTitle">📄 A4 PDF 預覽與下載</span>
+      <button type="button" class="modal-close" onclick="closeModal('a4PrintModal')">×</button>
+    </div>
+    <div class="a4-toolbar">
+      <div class="a4-options" id="a4OptionsWrap">
+        <label id="a4PageBreakOption" style="display:none;">
+          <input type="checkbox" id="a4OnePerPageChk" onchange="refreshA4Preview()">
+          <span>每人獨立一頁</span>
+        </label>
+        <label>
+          <input type="checkbox" id="a4ShowCheckColChk" checked onchange="refreshA4Preview()">
+          <span>顯示備料核對框 (□)</span>
+        </label>
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button type="button" class="btn btn-primary btn-sm" id="btnDownloadPdf" onclick="downloadA4PDF()">📥 下載 A4 PDF</button>
+        <button type="button" class="btn btn-accent btn-sm" id="btnSharePdf" onclick="shareA4PDF()" style="display:none;">📤 分享 PDF</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="executeA4Print()">🖨️ 系統列印</button>
+      </div>
+    </div>
+    <div style="padding:6px 14px; background:#F8FAFA; border-bottom:1px solid var(--border); font-size:12px; color:var(--muted);">
+      下載檔名：<b id="a4FilenamePreview" style="color:var(--primary);"></b>
+    </div>
+    <div class="a4-preview-scroll">
+      <div class="a4-paper" id="a4PreviewContent"></div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between; flex-wrap:wrap;">
+      <span style="font-size:11.5px; color:var(--muted);">💡 完全離線直接產生標準 A4 PDF 檔案並下載，手機 APK 與電腦瀏覽器皆適用。</span>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('a4PrintModal')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dedicated A4 Print Container (only visible during window.print()) -->
+<div id="a4PrintRoot"></div>
+
+<script>
+const COLORS = [
+  { name: "黃", bg: "#FCF3CF", fg: "#7D6608" },
+  { name: "粉紅", bg: "#FCE4EC", fg: "#AD1457" },
+  { name: "綠", bg: "#D4EFDF", fg: "#1E8449" },
+  { name: "紅", bg: "#FADBD8", fg: "#922B21" },
+  { name: "藍", bg: "#D6EAF8", fg: "#1B4F72" },
+  { name: "白", bg: "#FFFFFF", fg: "#2C3E50" },
+  { name: "紫", bg: "#E8DAEF", fg: "#5B2C6F" },
+  { name: "靛", bg: "#D2D8F2", fg: "#283593" },
+  { name: "橘", bg: "#FDEBD0", fg: "#A04000" },
+  { name: "金", bg: "#F5E6C8", fg: "#7E5109" },
+  { name: "銀", bg: "#E5E8E8", fg: "#424949" },
+  { name: "黑", bg: "#2C3E50", fg: "#FFFFFF" },
+  { name: "其他", bg: "#EFEFEF", fg: "#34495E" },
+];
+
+const ITEMS_SCHEMA = [
+  {
+    id: "bodhi",
+    name: "菩提百合花盤",
+    sub: "中間寶璃珠需同三教令色（花/葉點擊可累計 1~4）",
+    parts: [
+      { key: "flower", label: "花 (選4朵)", multi: true, max: 4 },
+      { key: "leaf", label: "葉 (選2片)", multi: true, max: 4 },
+      { key: "mother", label: "母／寶璃珠", multi: false },
+      { key: "sanjiao", label: "三教令", multi: false },
+    ]
+  },
+  {
+    id: "small_flower",
+    name: "小花",
+    sub: "花色、葉子、八卦",
+    parts: [
+      { key: "flower", label: "花色", multi: false },
+      { key: "leaf", label: "葉子", multi: false, sameAs: "同花色" },
+      { key: "bagua", label: "八卦", multi: false, sameAs: "同花色" },
+    ]
+  },
+  {
+    id: "big_small_flower",
+    name: "大小花",
+    sub: "外層花色、內層花色、葉子、八卦",
+    parts: [
+      { key: "outer", label: "外層花色", multi: false },
+      { key: "inner", label: "內層花色", multi: false, sameAs: "同外層" },
+      { key: "leaf", label: "葉子", multi: false, sameAs: "同外層" },
+      { key: "bagua", label: "八卦", multi: false, sameAs: "同外層" },
+    ]
+  },
+  {
+    id: "water_lotus",
+    name: "水蓮花",
+    sub: "花色、葉子、八卦",
+    parts: [
+      { key: "flower", label: "花色", multi: false },
+      { key: "leaf", label: "葉子", multi: false, sameAs: "同花色" },
+      { key: "bagua", label: "八卦", multi: false, sameAs: "同花色" },
+    ]
+  },
+  {
+    id: "big_small_water_lotus",
+    name: "大小水蓮花",
+    sub: "外層花色、內層花色、葉子、八卦",
+    parts: [
+      { key: "outer", label: "外層花色", multi: false },
+      { key: "inner", label: "內層花色", multi: false, sameAs: "同外層" },
+      { key: "leaf", label: "葉子", multi: false, sameAs: "同外層" },
+      { key: "bagua", label: "八卦", multi: false, sameAs: "同外層" },
+    ]
+  },
+  {
+    id: "double_petal",
+    name: "雙瓣蓮花",
+    sub: "外層花色、內層花色、葉子、八卦",
+    parts: [
+      { key: "outer", label: "外層花色", multi: false },
+      { key: "inner", label: "內層花色", multi: false, sameAs: "同外層" },
+      { key: "leaf", label: "葉子", multi: false, sameAs: "同外層" },
+      { key: "bagua", label: "八卦", multi: false, sameAs: "同外層" },
+    ]
+  },
+  {
+    id: "fugui_lotus",
+    name: "能量寶璃花 — 富貴蓮",
+    sub: "4 片花瓣編號勾選（允許重色，點選顏色依序填入 1～4）",
+    parts: [
+      { key: "petals", label: "花瓣配色 (4片)", slots: 4 },
+    ]
+  },
+  {
+    id: "palm_lotus",
+    name: "能量寶璃花 — 掌心蓮",
+    sub: "8 片花瓣編號勾選（允許重色，點選顏色依序填入 1～8）",
+    parts: [
+      { key: "petals", label: "花瓣配色 (8片)", slots: 8 },
+    ]
+  }
+];
+
+const SCHEMA_MAP = {};
+ITEMS_SCHEMA.forEach(it => { SCHEMA_MAP[it.id] = it; });
+const COLOR_MAP = {};
+COLORS.forEach(c => { COLOR_MAP[c.name] = c; });
+
+const APP_VERSION = "v13.0";
+const STORAGE_KEY = "lotus_tally_records_v1";
+let records = [];
+let editingId = null;
+let formEntries = [];
+
+function createEntry(itemId, qty = 1, open = true) {
+  const schema = SCHEMA_MAP[itemId];
+  const parts = {};
+  schema.parts.forEach(p => {
+    if (p.slots) {
+      parts[p.key] = { same: false, colors: {}, slots: Array(p.slots).fill(""), activeSlot: 0 };
+    } else {
+      parts[p.key] = { same: false, colors: {} };
+    }
+  });
+  return {
+    entryId: "ent_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+    itemId,
+    qty,
+    open,
+    note: "",
+    parts
+  };
+}
+
+function ensureSlotState(part, entParts) {
+  if (!entParts[part.key]) {
+    // Migrate legacy v1-v7 colors object for fugui_lotus / palm_lotus if present
+    const slotsArr = Array(part.slots).fill("");
+    if (entParts.colors && entParts.colors.colors) {
+      let idx = 0;
+      Object.entries(entParts.colors.colors).forEach(([cName, cnt]) => {
+        for (let i = 0; i < cnt && idx < part.slots; i++) {
+          slotsArr[idx++] = cName;
+        }
+      });
+    }
+    entParts[part.key] = { same: false, colors: {}, slots: slotsArr, activeSlot: slotsArr.indexOf("") };
+  }
+  const pst = entParts[part.key];
+  if (!Array.isArray(pst.slots)) {
+    pst.slots = Array(part.slots).fill("");
+  } else if (pst.slots.length < part.slots) {
+    while (pst.slots.length < part.slots) pst.slots.push("");
+  } else if (pst.slots.length > part.slots) {
+    pst.slots = pst.slots.slice(0, part.slots);
+  }
+  return pst;
+}
+
+function getRecordEntries(rec) {
+  if (Array.isArray(rec.entries)) return rec.entries;
+  const list = [];
+  if (rec.items) {
+    ITEMS_SCHEMA.forEach(it => {
+      const d = rec.items[it.id];
+      if (d && d.qty > 0) {
+        list.push({
+          entryId: "legacy_" + it.id,
+          itemId: it.id,
+          qty: d.qty,
+          note: d.note || "",
+          parts: d.parts || {}
+        });
+      }
+    });
+  }
+  return list;
+}
+
+function initPicker() {
+  const sel = document.getElementById("itemPickerSelect");
+  sel.innerHTML = ITEMS_SCHEMA.map(it => `<option value="${it.id}">${it.name}</option>`).join("");
+}
+
+function addSelectedItem() {
+  const sel = document.getElementById("itemPickerSelect");
+  const itemId = sel.value;
+  if (!itemId || !SCHEMA_MAP[itemId]) return;
+  const entry = createEntry(itemId, 1, true);
+  formEntries.push(entry);
+  renderForm();
+  showToast(`已新增「${SCHEMA_MAP[itemId].name}」`);
+  setTimeout(() => {
+    const el = document.getElementById("card_" + entry.entryId);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, 50);
+}
+
+function duplicateEntry(entryId) {
+  const idx = formEntries.findIndex(e => e.entryId === entryId);
+  if (idx < 0) return;
+  const copy = JSON.parse(JSON.stringify(formEntries[idx]));
+  copy.entryId = "ent_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+  copy.open = true;
+  formEntries.splice(idx + 1, 0, copy);
+  renderForm();
+  showToast(`已複製「${SCHEMA_MAP[copy.itemId].name}」`);
+}
+
+function removeEntry(entryId) {
+  formEntries = formEntries.filter(e => e.entryId !== entryId);
+  renderForm();
+}
+
+function changeEntryQty(entryId, delta) {
+  const ent = formEntries.find(e => e.entryId === entryId);
+  if (!ent) return;
+  const next = ent.qty + delta;
+  if (next <= 0) {
+    if (confirm(`數量歸零，要移除這張「${SCHEMA_MAP[ent.itemId].name}」嗎？`)) {
+      removeEntry(entryId);
+    }
+    return;
+  }
+  ent.qty = next;
+  renderForm();
+}
+
+function loadRecords() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    records = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    records = [];
+  }
+  updateHeaderAndFilters();
+}
+
+function persistRecords() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  } catch (e) {
+    showToast("⚠️ 無法寫入本機儲存空間");
+  }
+  updateHeaderAndFilters();
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { t.style.display = "none"; }, 2500);
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove("open");
+}
+
+function switchTab(tab) {
+  document.querySelectorAll(".tab-btn").forEach((b, idx) => {
+    b.classList.toggle("active", (tab === "form" && idx === 0) || (tab === "records" && idx === 1) || (tab === "summary" && idx === 2));
+  });
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById("view-" + tab).classList.add("active");
+  document.getElementById("formTopActionBar").style.display = (tab === "form") ? "block" : "none";
+  if (tab === "records") renderRecords();
+  if (tab === "summary") renderSummary();
+}
+
+function updateLiveTotalAndSaveBtn(qty) {
+  const lbl = editingId ? "💾 更新紀錄" : "💾 儲存紀錄";
+  ["liveTotalQtyTop", "liveTotalQtyBottom"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(qty);
+  });
+  ["saveBtnTop", "saveBtnBottom"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = lbl;
+  });
+}
+
+function syncTopActionBarOffset() {
+  const hdr = document.querySelector("header");
+  const bar = document.getElementById("formTopActionBar");
+  if (hdr && bar) {
+    bar.style.top = hdr.offsetHeight + "px";
+  }
+}
+window.addEventListener("resize", syncTopActionBarOffset);
+
+function renderForm() {
+  const container = document.getElementById("itemsContainer");
+  container.innerHTML = "";
+  let totalQty = 0;
+
+  if (formEntries.length === 0) {
+    container.innerHTML = `<div class="empty-items-box">尚未新增任何蓮花品項<br>請在上方選擇樣式並點擊「＋ 新增品項」，或點「📂 複製歷史紀錄」快速帶入</div>`;
+    updateLiveTotalAndSaveBtn(0);
+    return;
+  }
+
+  const typeTotals = {};
+  formEntries.forEach(e => { typeTotals[e.itemId] = (typeTotals[e.itemId] || 0) + 1; });
+  const typeSeen = {};
+
+  formEntries.forEach(ent => {
+    const item = SCHEMA_MAP[ent.itemId];
+    if (!item) return;
+    totalQty += ent.qty;
+    typeSeen[ent.itemId] = (typeSeen[ent.itemId] || 0) + 1;
+    const seqHtml = typeTotals[ent.itemId] > 1 ? `<span class="seq-badge">#${typeSeen[ent.itemId]}</span>` : "";
+
+    const card = document.createElement("div");
+    card.id = "card_" + ent.entryId;
+    card.className = "item-card" + (ent.open ? " open" : "");
+
+    const header = document.createElement("div");
+    header.className = "item-header";
+    header.onclick = (e) => {
+      if (e.target.closest(".header-controls")) return;
+      ent.open = !ent.open;
+      renderForm();
+    };
+    header.innerHTML = `
+      <div class="item-name-wrap">
+        <span class="item-name">${ent.open ? "▾" : "▸"} ${item.name} ${seqHtml}</span>
+        <span class="item-sub">${item.sub}</span>
+      </div>
+      <div class="header-controls">
+        <div class="stepper">
+          <button type="button" class="step-btn" onclick="changeEntryQty('${ent.entryId}', -1)">−</button>
+          <span class="step-val">${ent.qty}</span>
+          <button type="button" class="step-btn" onclick="changeEntryQty('${ent.entryId}', 1)">+</button>
+        </div>
+        <button type="button" class="icon-btn icon-btn-copy" onclick="duplicateEntry('${ent.entryId}')" title="複製此品項">複製</button>
+        <button type="button" class="icon-btn icon-btn-del" onclick="removeEntry('${ent.entryId}')" title="刪除此品項">✕</button>
+      </div>
+    `;
+    card.appendChild(header);
+
+    const body = document.createElement("div");
+    body.className = "item-body";
+
+    item.parts.forEach(part => {
+      const block = document.createElement("div");
+      block.className = "part-block";
+
+      if (part.slots) {
+        const pst = ensureSlotState(part, ent.parts);
+        const filledCount = pst.slots.filter(Boolean).length;
+        const firstEmpty = pst.slots.indexOf("");
+        let targetIdx = (typeof pst.activeSlot === "number" && pst.activeSlot >= 0 && pst.activeSlot < part.slots)
+          ? pst.activeSlot
+          : firstEmpty;
+
+        const ctrlBar = document.createElement("div");
+        ctrlBar.className = "slot-controls-bar";
+        ctrlBar.innerHTML = `
+          <div>
+            <span class="part-label">${part.label}</span>
+            <span class="slot-progress ${filledCount === part.slots ? "full" : ""}">已選 ${filledCount} / ${part.slots} 片</span>
+          </div>
+        `;
+
+        const btnRow = document.createElement("div");
+        btnRow.className = "slot-btn-row";
+
+        if (part.slots === 8) {
+          const dup4Btn = document.createElement("button");
+          dup4Btn.type = "button";
+          dup4Btn.className = "slot-mini-btn accent";
+          dup4Btn.textContent = "複製前4片 (1~4→5~8)";
+          dup4Btn.onclick = () => {
+            for (let i = 0; i < 4; i++) pst.slots[i + 4] = pst.slots[i];
+            pst.activeSlot = pst.slots.indexOf("");
+            renderForm();
+          };
+          btnRow.appendChild(dup4Btn);
+        }
+
+        const backBtn = document.createElement("button");
+        backBtn.type = "button";
+        backBtn.className = "slot-mini-btn";
+        backBtn.textContent = "← 退格";
+        backBtn.onclick = () => {
+          for (let i = part.slots - 1; i >= 0; i--) {
+            if (pst.slots[i]) {
+              pst.slots[i] = "";
+              pst.activeSlot = i;
+              break;
+            }
+          }
+          renderForm();
+        };
+        btnRow.appendChild(backBtn);
+
+        const clrBtn = document.createElement("button");
+        clrBtn.type = "button";
+        clrBtn.className = "slot-mini-btn";
+        clrBtn.textContent = "清空";
+        clrBtn.onclick = () => {
+          pst.slots = Array(part.slots).fill("");
+          pst.activeSlot = 0;
+          renderForm();
+        };
+        btnRow.appendChild(clrBtn);
+
+        ctrlBar.appendChild(btnRow);
+        block.appendChild(ctrlBar);
+
+        const hintDiv = document.createElement("div");
+        hintDiv.style.cssText = "font-size:11px; color:#52606D; margin-bottom:6px;";
+        hintDiv.textContent = "點下方顏色會自動填入反白編號格（允許重色）；點擊已填編號格可指定替換，再點一次可清除。";
+        block.appendChild(hintDiv);
+
+        // Numbered slots grid (1..4 or 1..8)
+        const slotsGrid = document.createElement("div");
+        slotsGrid.className = "petal-slots-grid" + (part.slots === 8 ? " slots-8" : "");
+
+        pst.slots.forEach((cName, idx) => {
+          const slotEl = document.createElement("div");
+          const isTarget = (idx === targetIdx);
+          slotEl.className = "petal-slot" + (cName ? " filled" : "") + (isTarget ? " active-target" : "");
+          if (cName && COLOR_MAP[cName]) {
+            slotEl.style.background = COLOR_MAP[cName].bg;
+            slotEl.style.color = COLOR_MAP[cName].fg;
+          }
+          slotEl.innerHTML = `
+            <span class="petal-slot-num">第 ${idx + 1} 片</span>
+            ${cName ? `<span class="petal-slot-val">${escapeHtml(cName)}</span>` : `<span class="petal-slot-empty-txt">未選</span>`}
+          `;
+          slotEl.onclick = () => {
+            if (pst.activeSlot === idx && cName) {
+              pst.slots[idx] = "";
+            } else {
+              pst.activeSlot = idx;
+            }
+            renderForm();
+          };
+          slotsGrid.appendChild(slotEl);
+        });
+        block.appendChild(slotsGrid);
+
+        // Count how many times each color is used in slots for badge display
+        const usedCounts = {};
+        pst.slots.forEach(c => { if (c) usedCounts[c] = (usedCounts[c] || 0) + 1; });
+
+        const grid = document.createElement("div");
+        grid.className = "color-grid";
+        COLORS.forEach(col => {
+          const cnt = usedCounts[col.name] || 0;
+          const chip = document.createElement("div");
+          chip.className = "color-chip" + (cnt > 0 ? " selected" : "");
+          chip.style.background = col.bg;
+          chip.style.color = col.fg;
+          chip.innerHTML = `${col.name}<span class="mark-badge">${cnt}</span>`;
+          chip.onclick = () => {
+            let fillIdx = (typeof pst.activeSlot === "number" && pst.activeSlot >= 0 && pst.activeSlot < part.slots)
+              ? pst.activeSlot
+              : pst.slots.indexOf("");
+            if (fillIdx === -1) {
+              showToast(`已填滿 ${part.slots} 片花瓣！如需修改請先點選上方編號格`);
+              return;
+            }
+            pst.slots[fillIdx] = col.name;
+            const nextEmpty = pst.slots.indexOf("");
+            pst.activeSlot = nextEmpty; // -1 when full
+            renderForm();
+          };
+          grid.appendChild(chip);
+        });
+        block.appendChild(grid);
+        body.appendChild(block);
+        return;
+      }
+
+      if (!ent.parts[part.key]) ent.parts[part.key] = { same: false, colors: {} };
+      const pst = ent.parts[part.key];
+
+      const top = document.createElement("div");
+      top.className = "part-top";
+      top.innerHTML = `
+        <div>
+          <span class="part-label">${part.label}</span>
+          ${part.multi ? '<span class="part-hint">(點一下+1，滿4歸零)</span>' : ''}
+        </div>
+      `;
+      if (part.sameAs) {
+        const sBtn = document.createElement("button");
+        sBtn.type = "button";
+        sBtn.className = "same-toggle" + (pst.same ? " active" : "");
+        sBtn.textContent = (pst.same ? "✓ " : "□ ") + part.sameAs;
+        sBtn.onclick = () => {
+          pst.same = !pst.same;
+          if (pst.same) pst.colors = {};
+          renderForm();
+        };
+        top.appendChild(sBtn);
+      }
+      block.appendChild(top);
+
+      const grid = document.createElement("div");
+      grid.className = "color-grid" + (pst.same ? " disabled" : "");
+
+      COLORS.forEach(col => {
+        const val = pst.colors[col.name] || 0;
+        const chip = document.createElement("div");
+        chip.className = "color-chip" + (val > 0 ? " selected" : "");
+        chip.style.background = col.bg;
+        chip.style.color = col.fg;
+        const badgeText = part.multi ? val : "✓";
+        chip.innerHTML = `${col.name}<span class="mark-badge">${badgeText}</span>`;
+        chip.onclick = () => {
+          if (part.multi) {
+            const next = (val + 1) > (part.max || 4) ? 0 : (val + 1);
+            if (next === 0) delete pst.colors[col.name];
+            else pst.colors[col.name] = next;
+          } else {
+            if (val > 0) delete pst.colors[col.name];
+            else pst.colors[col.name] = 1;
+          }
+          renderForm();
+        };
+        grid.appendChild(chip);
+      });
+
+      block.appendChild(grid);
+      body.appendChild(block);
+    });
+
+    const noteInp = document.createElement("input");
+    noteInp.className = "item-note-input";
+    noteInp.placeholder = "此品項備註（如配色順序：金白紅、黃白…、其他顏色說明）";
+    noteInp.value = ent.note || "";
+    noteInp.oninput = (e) => { ent.note = e.target.value; };
+    body.appendChild(noteInp);
+
+    card.appendChild(body);
+    container.appendChild(card);
+  });
+
+  updateLiveTotalAndSaveBtn(totalQty);
+}
+
+function resetForm(silent) {
+  editingId = null;
+  formEntries = [];
+  document.getElementById("metaPerson").value = "";
+  document.getElementById("metaNote").value = "";
+  if (!document.getElementById("metaDate").value) {
+    document.getElementById("metaDate").value = new Date().toISOString().slice(0, 10);
+  }
+  renderForm();
+  if (!silent) showToast("已清空表單");
+}
+
+function saveCurrentRecord() {
+  const temple = document.getElementById("metaTemple").value.trim() || "未填寫宮廟";
+  const person = document.getElementById("metaPerson").value.trim();
+  const date = document.getElementById("metaDate").value || new Date().toISOString().slice(0, 10);
+  const note = document.getElementById("metaNote").value.trim();
+
+  if (!person) {
+    showToast("請填寫「填表人姓名」");
+    document.getElementById("metaPerson").focus();
+    return;
+  }
+
+  const validEntries = formEntries.filter(e => e.qty > 0).map(e => ({
+    entryId: e.entryId,
+    itemId: e.itemId,
+    qty: e.qty,
+    note: e.note || "",
+    parts: JSON.parse(JSON.stringify(e.parts))
+  }));
+
+  const totalQty = validEntries.reduce((sum, e) => sum + e.qty, 0);
+
+  if (totalQty === 0 && !note) {
+    showToast("請至少新增一項品項或填寫備註");
+    return;
+  }
+
+  const rec = {
+    id: editingId || ("rec_" + Date.now()),
+    temple,
+    person,
+    date,
+    note,
+    totalQty,
+    entries: validEntries,
+    updatedAt: new Date().toISOString()
+  };
+
+  if (editingId) {
+    const idx = records.findIndex(r => r.id === editingId);
+    if (idx >= 0) records[idx] = rec;
+    else records.unshift(rec);
+    showToast(`已更新「${person}」的紀錄`);
+  } else {
+    records.unshift(rec);
+    showToast(`已儲存「${person}」的紀錄（共 ${totalQty} 件）`);
+  }
+
+  persistRecords();
+  resetForm(true);
+  autoSyncIfEnabled();
+}
+
+function formatPartText(part, pst) {
+  if (part.slots) {
+    const arr = Array.isArray(pst.slots) ? pst.slots : [];
+    const filled = arr.map((c, idx) => c ? `${idx + 1}${c}` : "").filter(Boolean);
+    if (filled.length > 0) return filled.join("-");
+    // Fallback for legacy colors object
+    const entries = Object.entries(pst.colors || {}).filter(([, v]) => v > 0);
+    if (entries.length > 0) return entries.map(([c, v]) => v > 1 ? `${c}×${v}` : c).join("、");
+    return "";
+  }
+  if (pst.same) return part.sameAs;
+  const entries = Object.entries(pst.colors || {}).filter(([, v]) => v > 0);
+  if (entries.length === 0) return "";
+  return entries.map(([c, v]) => (part.multi || v > 1) ? `${c}×${v}` : c).join("、");
+}
+
+function formatEntryDetail(item, ent) {
+  const partsDesc = [];
+  item.parts.forEach(p => {
+    let pst = (ent.parts && ent.parts[p.key]) || null;
+    if (!pst && p.slots && ent.parts && ent.parts.colors) {
+      pst = ent.parts.colors;
+    }
+    const txt = formatPartText(p, pst || { same: false, colors: {} });
+    if (txt) partsDesc.push(`${p.label.replace(/ \(.*\)/, "")}:${txt}`);
+  });
+  let res = partsDesc.join(" / ");
+  if (ent.note) res += (res ? `（${ent.note}）` : ent.note);
+  return res || "未指定顏色";
+}
+
+function updateHeaderAndFilters() {
+  document.getElementById("headerCount").textContent = `已存 ${records.length} 筆`;
+  const temples = [...new Set(records.map(r => r.temple).filter(Boolean))];
+  const dates = [...new Set(records.map(r => r.date).filter(Boolean))].sort((a, b) => b.localeCompare(a));
+
+  const dl = document.getElementById("templeList");
+  dl.innerHTML = temples.map(t => `<option value="${escapeHtml(t)}">`).join("");
+
+  ["filterTempleRecords", "filterTempleSummary", "modalFilterTemple"].forEach(selId => {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">全部宮廟</option>' + temples.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+    if (temples.includes(prev)) sel.value = prev;
+  });
+
+  ["filterDateRecords", "filterDateSummary", "modalFilterDate"].forEach(selId => {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">全部日期</option>' + dates.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join("");
+    if (dates.includes(prev)) sel.value = prev;
+  });
+}
+
+function getFilteredRecords() {
+  const fTemple = document.getElementById("filterTempleRecords").value;
+  const fDate = document.getElementById("filterDateRecords").value;
+  const fKey = document.getElementById("filterKeywordRecords").value.trim().toLowerCase();
+
+  return records.filter(r => {
+    if (fTemple && r.temple !== fTemple) return false;
+    if (fDate && r.date !== fDate) return false;
+    if (fKey) {
+      const entries = getRecordEntries(r);
+      const itemNames = entries.map(e => (SCHEMA_MAP[e.itemId] && SCHEMA_MAP[e.itemId].name) || "").join(" ");
+      const haystack = `${r.person} ${r.temple} ${r.date} ${r.note || ""} ${itemNames}`.toLowerCase();
+      if (!haystack.includes(fKey)) return false;
+    }
+    return true;
+  });
+}
+
+function clearRecordFilters() {
+  document.getElementById("filterTempleRecords").value = "";
+  document.getElementById("filterDateRecords").value = "";
+  document.getElementById("filterKeywordRecords").value = "";
+  renderRecords();
+}
+
+function renderRecords() {
+  const filtered = getFilteredRecords();
+  const list = document.getElementById("recordsList");
+  document.getElementById("recordsResultCount").textContent = `符合條件：共 ${filtered.length} 筆`;
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="card empty-state">找不到符合條件的紀錄。<br>請調整上方宮廟／日期／關鍵字篩選，或前往「個人登記」新增。</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(r => {
+    const entries = getRecordEntries(r);
+    const tags = entries.map(ent => {
+      const it = SCHEMA_MAP[ent.itemId];
+      if (!it) return "";
+      return `<span class="tag"><b>${it.name}×${ent.qty}</b>：${escapeHtml(formatEntryDetail(it, ent))}</span>`;
+    }).join("");
+    return `
+      <div class="record-card">
+        <div class="record-top">
+          <div>
+            <div class="record-title">${escapeHtml(r.person)} <span style="font-size:13px; color:#B87D4B;">（共 ${r.totalQty} 件）</span></div>
+            <div class="record-meta">🏛️ ${escapeHtml(r.temple)}　📅 ${escapeHtml(r.date)}</div>
+          </div>
+        </div>
+        <div class="record-tags">${tags}</div>
+        ${r.note ? `<div style="font-size:12px; color:#52606D; margin-bottom:8px;">📝 備註：${escapeHtml(r.note)}</div>` : ""}
+        <div class="record-actions">
+          <button class="btn btn-outline btn-sm" onclick="openA4PrintSingleRecord('${r.id}')">📄 轉成 PDF</button>
+          <button class="btn btn-accent btn-sm" onclick="copyRecordToForm('${r.id}')">📋 複製為新紀錄</button>
+          <button class="btn btn-secondary btn-sm" onclick="editRecord('${r.id}')">編輯</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteRecord('${r.id}')">刪除</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function copyRecordToForm(id, keepCurrentMeta = false) {
+  const rec = records.find(r => r.id === id);
+  if (!rec) return;
+  editingId = null; // Important: create as NEW record, do not overwrite original
+
+  if (!keepCurrentMeta) {
+    document.getElementById("metaTemple").value = rec.temple;
+    document.getElementById("metaDate").value = new Date().toISOString().slice(0, 10);
+  }
+  document.getElementById("metaPerson").value = rec.person;
+  document.getElementById("metaNote").value = rec.note || "";
+
+  formEntries = getRecordEntries(rec).map(ent => {
+    const copy = JSON.parse(JSON.stringify(ent));
+    copy.entryId = "ent_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+    copy.open = false;
+    return copy;
+  });
+  if (formEntries.length > 0) formEntries[0].open = true;
+
+  renderForm();
+  closeModal("historyCopyModal");
+  switchTab("form");
+  showToast(`已複製「${rec.temple}・${rec.person}」內容，請確認宮廟與日期後儲存`);
+}
+
+function openHistoryCopyModal() {
+  if (records.length === 0) {
+    showToast("目前尚無歷史紀錄可供複製");
+    return;
+  }
+  updateHeaderAndFilters();
+  document.getElementById("modalFilterKey").value = "";
+  renderHistoryCopyList();
+  document.getElementById("historyCopyModal").classList.add("open");
+}
+
+function renderHistoryCopyList() {
+  const t = document.getElementById("modalFilterTemple").value;
+  const d = document.getElementById("modalFilterDate").value;
+  const k = document.getElementById("modalFilterKey").value.trim().toLowerCase();
+  const box = document.getElementById("historyCopyList");
+
+  const list = records.filter(r => {
+    if (t && r.temple !== t) return false;
+    if (d && r.date !== d) return false;
+    if (k && !(`${r.person} ${r.temple} ${r.note || ""}`.toLowerCase().includes(k))) return false;
+    return true;
+  });
+
+  if (list.length === 0) {
+    box.innerHTML = `<div class="empty-state" style="padding:20px;">無符合條件的歷史紀錄</div>`;
+    return;
+  }
+
+  box.innerHTML = list.map(r => {
+    const entries = getRecordEntries(r);
+    const brief = entries.map(e => `${(SCHEMA_MAP[e.itemId] && SCHEMA_MAP[e.itemId].name) || ""}×${e.qty}`).join("、");
+    return `
+      <div class="history-item">
+        <div class="history-info">
+          <div class="history-title">${escapeHtml(r.person)}（${escapeHtml(r.temple)}・${escapeHtml(r.date)}）</div>
+          <div class="history-sub">共 ${r.totalQty} 件：${escapeHtml(brief)}</div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" onclick="copyRecordToForm('${r.id}', true)">套用</button>
+      </div>
+    `;
+  }).join("");
+}
+
+function openBatchCopyModal() {
+  const filtered = getFilteredRecords();
+  if (filtered.length === 0) {
+    showToast("目前沒有可複製的篩選紀錄");
+    return;
+  }
+  document.getElementById("batchCopySummaryText").textContent = `即將整批複製目前篩選出的 ${filtered.length} 筆紀錄：`;
+  document.getElementById("batchTargetTemple").value = "";
+  document.getElementById("batchTargetDate").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("batchCopyModal").classList.add("open");
+}
+
+function confirmBatchCopy() {
+  const filtered = getFilteredRecords();
+  if (filtered.length === 0) return;
+
+  const targetTemple = document.getElementById("batchTargetTemple").value.trim();
+  const targetDate = document.getElementById("batchTargetDate").value || new Date().toISOString().slice(0, 10);
+
+  const clones = filtered.map((r, idx) => {
+    const entriesCopy = getRecordEntries(r).map(ent => {
+      const c = JSON.parse(JSON.stringify(ent));
+      c.entryId = "ent_" + Date.now() + "_" + idx + "_" + Math.random().toString(36).slice(2, 5);
+      return c;
+    });
+    return {
+      id: "rec_" + (Date.now() + idx) + "_" + Math.random().toString(36).slice(2, 4),
+      temple: targetTemple || r.temple,
+      person: r.person,
+      date: targetDate,
+      note: r.note || "",
+      totalQty: r.totalQty,
+      entries: entriesCopy,
+      updatedAt: new Date().toISOString()
+    };
+  });
+
+  records = [...clones, ...records];
+  persistRecords();
+  autoSyncIfEnabled();
+  closeModal("batchCopyModal");
+
+  // Switch filter to newly copied temple/date so user immediately sees them
+  if (targetTemple) document.getElementById("filterTempleRecords").value = targetTemple;
+  document.getElementById("filterDateRecords").value = targetDate;
+  document.getElementById("filterKeywordRecords").value = "";
+  renderRecords();
+  showToast(`已成功整批複製 ${clones.length} 筆紀錄！`);
+}
+
+function editRecord(id) {
+  const rec = records.find(r => r.id === id);
+  if (!rec) return;
+  editingId = rec.id;
+  document.getElementById("metaTemple").value = rec.temple;
+  document.getElementById("metaPerson").value = rec.person;
+  document.getElementById("metaDate").value = rec.date;
+  document.getElementById("metaNote").value = rec.note || "";
+
+  formEntries = getRecordEntries(rec).map(ent => {
+    const copy = JSON.parse(JSON.stringify(ent));
+    copy.open = true;
+    return copy;
+  });
+  renderForm();
+  switchTab("form");
+  showToast(`正在編輯「${rec.person}」`);
+}
+
+function deleteRecord(id) {
+  const rec = records.find(r => r.id === id);
+  if (!rec) return;
+  if (!confirm(`確定要刪除「${rec.person}（${rec.temple}・${rec.date}）」的紀錄嗎？`)) return;
+  records = records.filter(r => r.id !== id);
+  persistRecords();
+  autoSyncIfEnabled();
+  renderRecords();
+  showToast("已刪除紀錄");
+}
+
+function getSummaryFilteredRecords() {
+  const fTemple = document.getElementById("filterTempleSummary").value;
+  const fDate = document.getElementById("filterDateSummary").value;
+  return records.filter(r => {
+    if (fTemple && r.temple !== fTemple) return false;
+    if (fDate && r.date !== fDate) return false;
+    return true;
+  });
+}
+
+function renderSummary() {
+  const fTemple = document.getElementById("filterTempleSummary").value;
+  const fDate = document.getElementById("filterDateSummary").value;
+  const filtered = getSummaryFilteredRecords();
+  const box = document.getElementById("summaryContent");
+
+  if (filtered.length === 0) {
+    box.innerHTML = `<div class="empty-state">此宮廟／日期條件下尚無資料可供統計。</div>`;
+    return;
+  }
+
+  let grandQty = 0;
+  const itemTotals = {};
+  const colorCounts = {};
+  COLORS.forEach(c => { colorCounts[c.name] = 0; });
+
+  ITEMS_SCHEMA.forEach(it => {
+    itemTotals[it.id] = { name: it.name, qty: 0, details: [] };
+  });
+
+  filtered.forEach(r => {
+    const entries = getRecordEntries(r);
+    entries.forEach(ent => {
+      const it = SCHEMA_MAP[ent.itemId];
+      if (!it || ent.qty <= 0) return;
+      grandQty += ent.qty;
+      itemTotals[it.id].qty += ent.qty;
+      const dateTag = (!fDate && r.date) ? ` [${r.date}]` : "";
+      itemTotals[it.id].details.push(`<b>${escapeHtml(r.person)}</b>${dateTag} (×${ent.qty})：${escapeHtml(formatEntryDetail(it, ent))}`);
+
+      const firstPartKey = it.parts[0].key;
+      const baseColors = (ent.parts && ent.parts[firstPartKey] && ent.parts[firstPartKey].colors) || {};
+      it.parts.forEach(p => {
+        let pst = (ent.parts && ent.parts[p.key]) || null;
+        if (!pst && p.slots && ent.parts && ent.parts.colors) pst = ent.parts.colors;
+        pst = pst || { same: false, colors: {} };
+        if (p.slots && Array.isArray(pst.slots)) {
+          pst.slots.forEach(cName => {
+            if (cName && colorCounts[cName] !== undefined) {
+              colorCounts[cName] += ent.qty;
+            }
+          });
+        } else {
+          const src = pst.same ? baseColors : (pst.colors || {});
+          Object.entries(src).forEach(([cName, val]) => {
+            if (colorCounts[cName] !== undefined && val > 0) {
+              colorCounts[cName] += val * ent.qty;
+            }
+          });
+        }
+      });
+    });
+  });
+
+  const rowsHtml = ITEMS_SCHEMA.map(it => {
+    const t = itemTotals[it.id];
+    if (t.qty === 0) return "";
+    return `
+      <tr>
+        <td style="font-weight:700; width:24%;">${it.name}</td>
+        <td class="num" style="width:12%;">${t.qty}</td>
+        <td>${t.details.join("<br>")}</td>
+      </tr>
+    `;
+  }).join("");
+
+  const colorBoxes = COLORS.map(c => `
+    <div class="color-stat-item" style="background:${c.bg}; color:${c.fg};">
+      ${c.name}
+      <span class="c-cnt">${colorCounts[c.name]}</span>
+    </div>
+  `).join("");
+
+  const titleLabel = `${fTemple || "全部宮廟"}${fDate ? "（" + fDate + "）" : ""}`;
+
+  box.innerHTML = `
+    <div class="card-title">
+      <span>${escapeHtml(titleLabel)} — 彙整總計表</span>
+      <span style="font-size:12px; font-weight:400; color:#52606D;">製表日期：${new Date().toISOString().slice(0,10)}</span>
+    </div>
+    <div class="kpi-row">
+      <div class="kpi-box"><div class="kpi-num">${filtered.length}</div><div class="kpi-lbl">統計筆數</div></div>
+      <div class="kpi-box"><div class="kpi-num">${grandQty}</div><div class="kpi-lbl">蓮花總件數</div></div>
+      <div class="kpi-box"><div class="kpi-num">${ITEMS_SCHEMA.filter(it => itemTotals[it.id].qty > 0).length}</div><div class="kpi-lbl">涵蓋品項數</div></div>
+    </div>
+    <h3 style="font-size:14px; color:#2C4A52; margin:12px 0 8px;">各品項數量與明細</h3>
+    <table class="sum-table">
+      <thead><tr><th>品項</th><th>合計</th><th>人員與配色明細</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    <h3 style="font-size:14px; color:#2C4A52; margin:16px 0 8px;">各色使用頻次統計（含同花色自動換算）</h3>
+    <div class="color-stat-grid">${colorBoxes}</div>
+  `;
+}
+
+function exportCSV() {
+  const fTemple = document.getElementById("filterTempleSummary").value;
+  const fDate = document.getElementById("filterDateSummary").value;
+  const filtered = getSummaryFilteredRecords();
+  if (filtered.length === 0) { showToast("沒有可匯出的資料"); return; }
+
+  const lines = [["宮廟", "日期", "姓名", "品項", "數量", "配色與部位明細", "個人備註"]];
+  filtered.forEach(r => {
+    getRecordEntries(r).forEach(ent => {
+      const it = SCHEMA_MAP[ent.itemId];
+      if (it && ent.qty > 0) {
+        lines.push([r.temple, r.date, r.person, it.name, ent.qty, formatEntryDetail(it, ent), r.note || ""]);
+      }
+    });
+  });
+
+  const csvStr = "\uFEFF" + lines.map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const tag = `${fTemple || "全部"}${fDate ? "_" + fDate : ""}`;
+  downloadBlob(new Blob([csvStr], { type: "text/csv;charset=utf-8;" }), `蓮花統計_${tag}.csv`);
+  showToast("已匯出 CSV（可用 Excel 開啟）");
+}
+
+function exportBackupJSON() {
+  if (records.length === 0) { showToast("尚無資料可備份"); return; }
+  downloadBlob(new Blob([JSON.stringify(records, null, 2)], { type: "application/json" }), `蓮花統計備份_${new Date().toISOString().slice(0,10)}.json`);
+  showToast("已下載 JSON 備份檔");
+}
+
+function importBackupJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!Array.isArray(data)) throw new Error();
+      if (confirm(`偵測到 ${data.length} 筆紀錄，確定要合併匯入嗎？`)) {
+        const existingIds = new Set(records.map(r => r.id));
+        data.forEach(r => { if (!existingIds.has(r.id)) records.push(r); });
+        persistRecords();
+        renderRecords();
+        showToast("已成功還原備份資料");
+      }
+    } catch {
+      showToast("備份檔格式錯誤");
+    }
+    e.target.value = "";
+  };
+  reader.readAsText(file);
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function loadSampleFu() {
+  editingId = null;
+  document.getElementById("metaTemple").value = "城隍廟";
+  document.getElementById("metaPerson").value = "傅";
+  document.getElementById("metaDate").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("metaNote").value = "";
+
+  const e1 = createEntry("bodhi", 1, true);
+  e1.note = "黃母";
+  e1.parts.flower.colors = { "黃": 1, "紫": 3 };
+  e1.parts.leaf.colors = { "紫": 2 };
+  e1.parts.mother.colors = { "黃": 1 };
+
+  const e2 = createEntry("small_flower", 1, false);
+  e2.parts.flower.colors = { "白": 1 };
+  e2.parts.leaf.same = true;
+  e2.parts.bagua.same = true;
+
+  const e3 = createEntry("big_small_flower", 1, false);
+  e3.note = "金包白";
+  e3.parts.outer.colors = { "金": 1 };
+  e3.parts.inner.colors = { "白": 1 };
+  e3.parts.leaf.same = true;
+  e3.parts.bagua.same = true;
+
+  const e4 = createEntry("water_lotus", 1, false);
+  e4.parts.flower.colors = { "靛": 1 };
+  e4.parts.leaf.same = true;
+  e4.parts.bagua.same = true;
+
+  const e5 = createEntry("double_petal", 1, false);
+  e5.note = "外紅內黃";
+  e5.parts.outer.colors = { "紅": 1 };
+  e5.parts.inner.colors = { "黃": 1 };
+  e5.parts.leaf.same = true;
+  e5.parts.bagua.same = true;
+
+  const e6 = createEntry("fugui_lotus", 1, true);
+  e6.note = "4片範例";
+  e6.parts.petals.slots = ["金", "白", "紅", "金"];
+  e6.parts.petals.activeSlot = -1;
+
+  const e7 = createEntry("palm_lotus", 1, true);
+  e7.note = "8片範例";
+  e7.parts.petals.slots = ["金", "黃", "紅", "金", "金", "黃", "紅", "金"];
+  e7.parts.petals.activeSlot = -1;
+
+  formEntries = [e1, e2, e3, e4, e5, e6, e7];
+  renderForm();
+  showToast("已載入「城隍廟－傅」範例");
+}
+
+function escapeHtml(str) {
+  return String(str || "").replace(/[&<>"']/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s]));
+}
+
+
+// ==========================================
+// Google Sheets Cloud Sync (Apps Script)
+// ==========================================
+const CLOUD_CFG_KEY = "lotus_tally_cloud_cfg_v1";
+const DEFAULT_CLOUD_URL = "https://script.google.com/macros/s/AKfycbzvC1oh0x73r-O8iNTb69Cphgl3hbDbL-zCLsJNp-q98CFYv7NfchMNuadKFGLGpxs5/exec";
+const GAS_CODE_TEXT = '// ==========================================\n// 參拜宮廟蓮花統計工具 — Google 試算表雲端同步腳本\n// ==========================================\nconst SHEET_NAME = "蓮花統計雲端資料";\nconst SYNC_TOKEN = ""; // 選填：若要加密碼保護，請在雙引號內輸入自訂密碼（如 "1234"）\n\nfunction getOrCreateSheet() {\n  const ss = SpreadsheetApp.getActiveSpreadsheet();\n  let sheet = ss.getSheetByName(SHEET_NAME);\n  if (!sheet) {\n    sheet = ss.insertSheet(SHEET_NAME);\n    const headers = ["紀錄ID", "參拜宮廟", "參拜日期", "填表人姓名", "總件數", "品項明細", "個人備註", "最後更新時間", "完整資料JSON"];\n    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);\n    sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#2C4A52").setFontColor("#FFFFFF");\n    sheet.setFrozenRows(1);\n    sheet.setColumnWidth(1, 160);\n    sheet.setColumnWidth(2, 120);\n    sheet.setColumnWidth(3, 110);\n    sheet.setColumnWidth(4, 100);\n    sheet.setColumnWidth(5, 70);\n    sheet.setColumnWidth(6, 360);\n    sheet.setColumnWidth(7, 160);\n    sheet.setColumnWidth(8, 160);\n    sheet.hideColumns(9);\n  }\n  return sheet;\n}\n\nfunction checkToken(token) {\n  if (!SYNC_TOKEN) return true;\n  return String(token || "") === String(SYNC_TOKEN);\n}\n\nfunction jsonOut(obj) {\n  return ContentService\n    .createTextOutput(JSON.stringify(obj))\n    .setMimeType(ContentService.MimeType.JSON);\n}\n\nfunction doGet(e) {\n  try {\n    const params = (e && e.parameter) ? e.parameter : {};\n    if (!checkToken(params.token)) {\n      return jsonOut({ ok: false, error: "同步密碼不正確" });\n    }\n    const action = params.action || "load";\n    const sheet = getOrCreateSheet();\n    if (action === "ping") {\n      return jsonOut({ ok: true, message: "連線成功", count: Math.max(0, sheet.getLastRow() - 1) });\n    }\n    const lastRow = sheet.getLastRow();\n    const records = [];\n    if (lastRow >= 2) {\n      const jsonCol = sheet.getRange(2, 9, lastRow - 1, 1).getValues();\n      for (let i = 0; i < jsonCol.length; i++) {\n        if (jsonCol[i][0]) {\n          try { records.push(JSON.parse(jsonCol[i][0])); } catch (err) {}\n        }\n      }\n    }\n    return jsonOut({ ok: true, records: records, count: records.length });\n  } catch (err) {\n    return jsonOut({ ok: false, error: String(err) });\n  }\n}\n\nfunction doPost(e) {\n  try {\n    const body = JSON.parse(e.postData.contents || "{}");\n    if (!checkToken(body.token)) {\n      return jsonOut({ ok: false, error: "同步密碼不正確" });\n    }\n    const records = Array.isArray(body.records) ? body.records : [];\n    const sheet = getOrCreateSheet();\n    const lastRow = sheet.getLastRow();\n    if (lastRow >= 2) {\n      sheet.getRange(2, 1, lastRow - 1, 9).clearContent();\n    }\n    if (records.length > 0) {\n      const rows = records.map(function(r) {\n        return [\n          r.id || "",\n          r.temple || "",\n          r.date || "",\n          r.person || "",\n          r.totalQty || 0,\n          r.summaryText || "",\n          r.note || "",\n          r.updatedAt || "",\n          JSON.stringify(r)\n        ];\n      });\n      sheet.getRange(2, 1, rows.length, 9).setValues(rows);\n    }\n    return jsonOut({ ok: true, saved: records.length });\n  } catch (err) {\n    return jsonOut({ ok: false, error: String(err) });\n  }\n}';
+
+let cloudCfg = { url: DEFAULT_CLOUD_URL, token: "", autoSync: true, lastSync: "" };
+
+function loadCloudConfig() {
+  try {
+    const raw = localStorage.getItem(CLOUD_CFG_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      cloudCfg = Object.assign(cloudCfg, parsed);
+    }
+  } catch (e) {}
+  if (!cloudCfg.url) {
+    cloudCfg.url = DEFAULT_CLOUD_URL;
+  }
+  updateCloudIndicator();
+}
+
+async function autoPullIfEmptyOnStartup() {
+  if (!cloudCfg.url || records.length > 0) return;
+  setCloudDotState("busy");
+  try {
+    const res = await apiCloudGet("load");
+    if (Array.isArray(res.records) && res.records.length > 0) {
+      records = res.records;
+      persistRecords();
+      cloudCfg.lastSync = new Date().toLocaleString("zh-TW");
+      persistCloudConfig();
+      renderRecords();
+      renderSummary();
+      showToast(`☁️ 已自動從 Google 試算表載入 ${records.length} 筆紀錄`);
+    }
+    setCloudDotState("ok");
+  } catch (e) {
+    setCloudDotState("ok");
+  }
+}
+
+function persistCloudConfig() {
+  try {
+    localStorage.setItem(CLOUD_CFG_KEY, JSON.stringify(cloudCfg));
+  } catch (e) {}
+  updateCloudIndicator();
+}
+
+function setCloudDotState(state) {
+  const dot = document.getElementById("cloudDot");
+  if (!dot) return;
+  dot.className = "cloud-dot" + (state ? " " + state : "");
+}
+
+function updateCloudIndicator() {
+  if (!cloudCfg.url) {
+    setCloudDotState("");
+  } else {
+    setCloudDotState("ok");
+  }
+}
+
+function setCloudStatusText(msg) {
+  const box = document.getElementById("cloudStatusBox");
+  if (box) box.innerHTML = msg;
+}
+
+function openCloudModal() {
+  document.getElementById("cloudUrlInput").value = cloudCfg.url || "";
+  document.getElementById("cloudTokenInput").value = cloudCfg.token || "";
+  document.getElementById("cloudAutoSyncChk").checked = !!cloudCfg.autoSync;
+  document.getElementById("gasCodePre").textContent = GAS_CODE_TEXT;
+  if (cloudCfg.url) {
+    setCloudStatusText(`已設定同步網址。<br>上次同步時間：${cloudCfg.lastSync || "尚未同步"}`);
+  } else {
+    setCloudStatusText("尚未設定雲端同步網址。請展開下方說明取得專屬 Google 試算表網址。");
+  }
+  document.getElementById("cloudSyncModal").classList.add("open");
+}
+
+function readCloudInputs() {
+  cloudCfg.url = document.getElementById("cloudUrlInput").value.trim();
+  cloudCfg.token = document.getElementById("cloudTokenInput").value.trim();
+  cloudCfg.autoSync = document.getElementById("cloudAutoSyncChk").checked;
+  persistCloudConfig();
+  return cloudCfg.url;
+}
+
+function buildRecordSummaryText(r) {
+  return getRecordEntries(r).map(ent => {
+    const it = SCHEMA_MAP[ent.itemId];
+    if (!it || ent.qty <= 0) return "";
+    return `${it.name}×${ent.qty}（${formatEntryDetail(it, ent)}）`;
+  }).filter(Boolean).join("；");
+}
+
+async function apiCloudGet(action) {
+  if (!cloudCfg.url) throw new Error("請先填入 Google Apps Script 網址");
+  const sep = cloudCfg.url.includes("?") ? "&" : "?";
+  const url = `${cloudCfg.url}${sep}action=${encodeURIComponent(action)}&token=${encodeURIComponent(cloudCfg.token || "")}&_t=${Date.now()}`;
+  const resp = await fetch(url, { method: "GET", redirect: "follow" });
+  if (!resp.ok) throw new Error("HTTP 錯誤 " + resp.status);
+  const data = await resp.json();
+  if (!data.ok) throw new Error(data.error || "雲端回傳失敗");
+  return data;
+}
+
+async function apiCloudPost(recordList) {
+  if (!cloudCfg.url) throw new Error("請先填入 Google Apps Script 網址");
+  const payload = {
+    token: cloudCfg.token || "",
+    records: recordList.map(r => Object.assign({}, r, { summaryText: buildRecordSummaryText(r) }))
+  };
+  // Use text/plain to avoid CORS preflight OPTIONS with Google Apps Script
+  const resp = await fetch(cloudCfg.url, {
+    method: "POST",
+    redirect: "follow",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
+  });
+  if (!resp.ok) throw new Error("HTTP 錯誤 " + resp.status);
+  const data = await resp.json();
+  if (!data.ok) throw new Error(data.error || "上傳失敗");
+  return data;
+}
+
+async function saveAndTestCloud() {
+  const url = readCloudInputs();
+  if (!url) {
+    setCloudStatusText("⚠️ 請先貼上 Google Apps Script 網頁應用程式網址。");
+    return;
+  }
+  setCloudDotState("busy");
+  setCloudStatusText("⏳ 正在測試與 Google 試算表的連線...");
+  try {
+    const res = await apiCloudGet("ping");
+    setCloudDotState("ok");
+    setCloudStatusText(`✅ 連線成功！目前 Google 試算表內已有 <b>${res.count}</b> 筆雲端紀錄。`);
+    showToast("Google 試算表連線成功");
+  } catch (err) {
+    setCloudDotState("err");
+    setCloudStatusText(`❌ 連線失敗：${escapeHtml(err.message)}<br>請確認部署時「誰可以存取」已選為「所有人」。`);
+  }
+}
+
+async function cloudSyncMerge() {
+  if (!readCloudInputs()) { showToast("請先設定雲端網址"); return; }
+  setCloudDotState("busy");
+  setCloudStatusText("⏳ 正在進行雙向合併同步...");
+  try {
+    const cloudRes = await apiCloudGet("load");
+    const cloudList = Array.isArray(cloudRes.records) ? cloudRes.records : [];
+    const mergedMap = new Map();
+
+    cloudList.forEach(r => { if (r && r.id) mergedMap.set(r.id, r); });
+    records.forEach(r => {
+      if (!r || !r.id) return;
+      const existing = mergedMap.get(r.id);
+      if (!existing || String(r.updatedAt || "") >= String(existing.updatedAt || "")) {
+        mergedMap.set(r.id, r);
+      }
+    });
+
+    const merged = Array.from(mergedMap.values()).sort((a, b) =>
+      String(b.updatedAt || "").localeCompare(String(a.updatedAt || ""))
+    );
+
+    await apiCloudPost(merged);
+    records = merged;
+    persistRecords();
+    cloudCfg.lastSync = new Date().toLocaleString("zh-TW");
+    persistCloudConfig();
+    renderRecords();
+    renderSummary();
+    setCloudDotState("ok");
+    setCloudStatusText(`✅ 雙向同步完成！目前共 <b>${records.length}</b> 筆紀錄。<br>同步時間：${cloudCfg.lastSync}`);
+    showToast(`雲端同步完成（共 ${records.length} 筆）`);
+  } catch (err) {
+    setCloudDotState("err");
+    setCloudStatusText(`❌ 同步失敗：${escapeHtml(err.message)}`);
+    showToast("雲端同步失敗");
+  }
+}
+
+async function cloudPushOverwrite() {
+  if (!readCloudInputs()) { showToast("請先設定雲端網址"); return; }
+  if (!confirm(`確定要以目前本機的 ${records.length} 筆紀錄「覆蓋」Google 試算表嗎？`)) return;
+  setCloudDotState("busy");
+  setCloudStatusText("⏳ 正在上傳覆蓋雲端...");
+  try {
+    await apiCloudPost(records);
+    cloudCfg.lastSync = new Date().toLocaleString("zh-TW");
+    persistCloudConfig();
+    setCloudDotState("ok");
+    setCloudStatusText(`✅ 已將本機 <b>${records.length}</b> 筆紀錄完整覆蓋至 Google 試算表。<br>時間：${cloudCfg.lastSync}`);
+    showToast("已上傳覆蓋至 Google 試算表");
+  } catch (err) {
+    setCloudDotState("err");
+    setCloudStatusText(`❌ 上傳失敗：${escapeHtml(err.message)}`);
+  }
+}
+
+async function cloudPullOverwrite() {
+  if (!readCloudInputs()) { showToast("請先設定雲端網址"); return; }
+  if (!confirm("確定要從 Google 試算表下載紀錄並「覆蓋」目前本機資料嗎？")) return;
+  setCloudDotState("busy");
+  setCloudStatusText("⏳ 正在從 Google 試算表下載...");
+  try {
+    const res = await apiCloudGet("load");
+    records = Array.isArray(res.records) ? res.records : [];
+    persistRecords();
+    cloudCfg.lastSync = new Date().toLocaleString("zh-TW");
+    persistCloudConfig();
+    renderRecords();
+    renderSummary();
+    setCloudDotState("ok");
+    setCloudStatusText(`✅ 已從雲端下載 <b>${records.length}</b> 筆紀錄。<br>時間：${cloudCfg.lastSync}`);
+    showToast(`已從雲端還原 ${records.length} 筆紀錄`);
+  } catch (err) {
+    setCloudDotState("err");
+    setCloudStatusText(`❌ 下載失敗：${escapeHtml(err.message)}`);
+  }
+}
+
+async function autoSyncIfEnabled() {
+  if (!cloudCfg.url || !cloudCfg.autoSync) return;
+  setCloudDotState("busy");
+  try {
+    await apiCloudPost(records);
+    cloudCfg.lastSync = new Date().toLocaleString("zh-TW");
+    persistCloudConfig();
+    setCloudDotState("ok");
+  } catch (err) {
+    setCloudDotState("err");
+    showToast("⚠️ 本機已存檔，但雲端自動同步失敗（可稍後手動同步）");
+  }
+}
+
+function copyGasCode() {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(GAS_CODE_TEXT).then(() => showToast("已複製 Google Apps Script 程式碼"));
+  } else {
+    const ta = document.createElement("textarea");
+    ta.value = GAS_CODE_TEXT;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    showToast("已複製 Google Apps Script 程式碼");
+  }
+}
+
+
+// ==========================================
+// A4 PDF Preview & Offline Pure-JS PDF Generator
+// ==========================================
+let currentA4Context = { type: "", recordId: "", filename: "蓮花統計.pdf" };
+
+function sanitizeFilename(str) {
+  return String(str || "").trim().replace(/[\\/:*?"<>|\s]+/g, "_").replace(/^_+|_+$/g, "") || "未命名";
+}
+
+function makePdfFilename(temple, person, date) {
+  return `${sanitizeFilename(temple)}_${sanitizeFilename(person)}_${sanitizeFilename(date)}.pdf`;
+}
+
+function getRecordColorStats(r) {
+  const cMap = {};
+  COLORS.forEach(c => { cMap[c.name] = 0; });
+  getRecordEntries(r).forEach(ent => {
+    const it = SCHEMA_MAP[ent.itemId];
+    if (!it || ent.qty <= 0) return;
+    const firstPartKey = it.parts[0].key;
+    const baseColors = (ent.parts && ent.parts[firstPartKey] && ent.parts[firstPartKey].colors) || {};
+    it.parts.forEach(p => {
+      let pst = (ent.parts && ent.parts[p.key]) || null;
+      if (!pst && p.slots && ent.parts && ent.parts.colors) pst = ent.parts.colors;
+      pst = pst || { same: false, colors: {} };
+      if (p.slots && Array.isArray(pst.slots)) {
+        pst.slots.forEach(cName => { if (cName && cMap[cName] !== undefined) cMap[cName] += ent.qty; });
+      } else {
+        const src = pst.same ? baseColors : (pst.colors || {});
+        Object.entries(src).forEach(([cName, val]) => {
+          if (cMap[cName] !== undefined && val > 0) cMap[cName] += val * ent.qty;
+        });
+      }
+    });
+  });
+  return cMap;
+}
+
+function buildSingleRecordA4Html(r, showCheckCol) {
+  const entries = getRecordEntries(r);
+  const rows = entries.map((ent, idx) => {
+    const it = SCHEMA_MAP[ent.itemId];
+    if (!it || ent.qty <= 0) return "";
+    return `
+      <tr>
+        <td class="c" style="width:6%;">${idx + 1}</td>
+        <td style="width:24%; font-weight:700;">${escapeHtml(it.name)}</td>
+        <td class="c" style="width:9%; font-weight:700;">${ent.qty}</td>
+        <td>${escapeHtml(formatEntryDetail(it, ent))}</td>
+        ${showCheckCol ? '<td class="c" style="width:9%; font-size:15px;">□</td>' : ''}
+      </tr>
+    `;
+  }).join("");
+
+  const cMap = getRecordColorStats(r);
+  const usedColorTags = COLORS.filter(c => cMap[c.name] > 0)
+    .map(c => `<span style="display:inline-block; padding:2px 7px; margin:2px 4px 2px 0; border:1px solid #94A3B8; border-radius:4px; background:${c.bg}; color:${c.fg}; font-size:11.5px; font-weight:700;">${c.name} × ${cMap[c.name]}</span>`)
+    .join("");
+
+  return `
+    <div class="a4-record-block">
+      <div class="a4-doc-header">
+        <h2 class="a4-doc-title">🪷 參拜宮廟蓮花個人明細單</h2>
+        <div class="a4-doc-sub">製表日期：${new Date().toISOString().slice(0, 10)}（${APP_VERSION}）</div>
+      </div>
+      <div class="a4-meta-bar">
+        <div><b>參拜宮廟：</b>${escapeHtml(r.temple || "未填寫")}</div>
+        <div><b>填表人：</b>${escapeHtml(r.person || "未填寫")}</div>
+        <div><b>參拜日期：</b>${escapeHtml(r.date || "")}</div>
+        <div><b>總件數：</b><span style="color:#B87D4B; font-weight:800;">${r.totalQty || 0}</span> 件</div>
+      </div>
+      <table class="a4-table">
+        <thead>
+          <tr>
+            <th>項次</th>
+            <th>樣式／品項</th>
+            <th>數量</th>
+            <th>部位與顏色明細</th>
+            ${showCheckCol ? '<th>備料</th>' : ''}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows || `<tr><td colspan="${showCheckCol ? 5 : 4}" class="c">（無品項明細）</td></tr>`}
+        </tbody>
+      </table>
+      ${usedColorTags ? `<div style="margin-bottom:10px; font-size:12px;"><b>各色使用小計：</b>${usedColorTags}</div>` : ''}
+      ${r.note ? `<div class="a4-note-box"><b>其他需求／備註：</b>${escapeHtml(r.note)}</div>` : ''}
+      <div class="a4-footer-sign">
+        <span>核對人簽名：________________</span>
+        <span>完成確認：□ 已備料　□ 已裝箱</span>
+      </div>
+    </div>
+  `;
+}
+
+function buildSummaryA4Html(showCheckCol) {
+  const fTemple = document.getElementById("filterTempleSummary").value;
+  const fDate = document.getElementById("filterDateSummary").value;
+  const filtered = getSummaryFilteredRecords();
+  if (filtered.length === 0) return `<p style="text-align:center; padding:30px;">無符合條件的統計資料</p>`;
+
+  let grandQty = 0;
+  const itemTotals = {};
+  const colorCounts = {};
+  COLORS.forEach(c => { colorCounts[c.name] = 0; });
+  ITEMS_SCHEMA.forEach(it => { itemTotals[it.id] = { name: it.name, qty: 0, details: [] }; });
+
+  filtered.forEach(r => {
+    getRecordEntries(r).forEach(ent => {
+      const it = SCHEMA_MAP[ent.itemId];
+      if (!it || ent.qty <= 0) return;
+      grandQty += ent.qty;
+      itemTotals[it.id].qty += ent.qty;
+      const dateTag = (!fDate && r.date) ? ` [${r.date}]` : "";
+      itemTotals[it.id].details.push(`<b>${escapeHtml(r.person)}</b>${dateTag} (×${ent.qty})：${escapeHtml(formatEntryDetail(it, ent))}`);
+
+      const firstPartKey = it.parts[0].key;
+      const baseColors = (ent.parts && ent.parts[firstPartKey] && ent.parts[firstPartKey].colors) || {};
+      it.parts.forEach(p => {
+        let pst = (ent.parts && ent.parts[p.key]) || null;
+        if (!pst && p.slots && ent.parts && ent.parts.colors) pst = ent.parts.colors;
+        pst = pst || { same: false, colors: {} };
+        if (p.slots && Array.isArray(pst.slots)) {
+          pst.slots.forEach(cName => { if (cName && colorCounts[cName] !== undefined) colorCounts[cName] += ent.qty; });
+        } else {
+          const src = pst.same ? baseColors : (pst.colors || {});
+          Object.entries(src).forEach(([cName, val]) => {
+            if (colorCounts[cName] !== undefined && val > 0) colorCounts[cName] += val * ent.qty;
+          });
+        }
+      });
+    });
+  });
+
+  const rowsHtml = ITEMS_SCHEMA.map(it => {
+    const t = itemTotals[it.id];
+    if (t.qty === 0) return "";
+    return `
+      <tr>
+        <td style="width:22%; font-weight:700;">${it.name}</td>
+        <td class="c" style="width:9%; font-weight:800; color:#2C4A52;">${t.qty}</td>
+        <td>${t.details.join("<br>")}</td>
+        ${showCheckCol ? '<td class="c" style="width:8%; font-size:15px;">□</td>' : ''}
+      </tr>
+    `;
+  }).join("");
+
+  const colorCells = COLORS.map(c => `
+    <div class="a4-color-cell" style="background:${c.bg}; color:${c.fg};">
+      ${c.name}<div style="font-size:15px; margin-top:2px;">${colorCounts[c.name]}</div>
+    </div>
+  `).join("");
+
+  const titleLabel = `${fTemple || "全部宮廟"}${fDate ? "（" + fDate + "）" : ""}`;
+  return `
+    <div class="a4-doc-header">
+      <h2 class="a4-doc-title">🪷 ${escapeHtml(titleLabel)} — 蓮花彙整總計表</h2>
+      <div class="a4-doc-sub">製表日期：${new Date().toISOString().slice(0, 10)}（${APP_VERSION}）</div>
+    </div>
+    <div class="a4-meta-bar">
+      <div><b>統計範圍：</b>${escapeHtml(fTemple || "全部宮廟")}</div>
+      <div><b>日期範圍：</b>${escapeHtml(fDate || "全部日期")}</div>
+      <div><b>統計筆數：</b>${filtered.length} 筆</div>
+      <div><b>蓮花總件數：</b><span style="color:#B87D4B; font-weight:800;">${grandQty}</span> 件</div>
+    </div>
+    <table class="a4-table">
+      <thead>
+        <tr>
+          <th>品項</th>
+          <th>合計</th>
+          <th>人員與配色明細</th>
+          ${showCheckCol ? '<th>備料</th>' : ''}
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    <div style="font-size:13px; font-weight:700; color:#2C4A52; margin:10px 0 6px;">各色使用頻次統計（含同花色自動換算）</div>
+    <div class="a4-color-grid">${colorCells}</div>
+    <div class="a4-footer-sign">
+      <span>總計核對：________________</span>
+      <span>備料進度：□ 待備料　□ 製作中　□ 已完成</span>
+    </div>
+  `;
+}
+
+function updateShareButtonVisibility() {
+  const shareBtn = document.getElementById("btnSharePdf");
+  if (shareBtn) {
+    shareBtn.style.display = (navigator.share && navigator.canShare) ? "inline-block" : "none";
+  }
+}
+
+function openA4PrintCurrentForm() {
+  const temple = document.getElementById("metaTemple").value.trim() || "未填寫宮廟";
+  const person = document.getElementById("metaPerson").value.trim() || "未填寫姓名";
+  const date = document.getElementById("metaDate").value || new Date().toISOString().slice(0, 10);
+  const note = document.getElementById("metaNote").value.trim();
+  const validEntries = formEntries.filter(e => e.qty > 0);
+  if (validEntries.length === 0 && !note) {
+    showToast("目前表單尚無品項內容可轉成 PDF");
+    return;
+  }
+  currentA4Context = {
+    type: "current_form",
+    tempRecord: {
+      temple, person, date, note,
+      totalQty: validEntries.reduce((s, e) => s + e.qty, 0),
+      entries: validEntries
+    },
+    filename: makePdfFilename(temple, person, date)
+  };
+  document.getElementById("a4ModalTitle").textContent = `📄 A4 PDF 預覽 — ${person}（${temple}）`;
+  document.getElementById("a4PageBreakOption").style.display = "none";
+  document.getElementById("a4FilenamePreview").textContent = currentA4Context.filename;
+  updateShareButtonVisibility();
+  refreshA4Preview();
+  document.getElementById("a4PrintModal").classList.add("open");
+}
+
+function openA4PrintSingleRecord(id) {
+  const rec = records.find(r => r.id === id);
+  if (!rec) return;
+  currentA4Context = {
+    type: "single",
+    recordId: id,
+    filename: makePdfFilename(rec.temple, rec.person, rec.date)
+  };
+  document.getElementById("a4ModalTitle").textContent = `📄 A4 PDF 預覽 — ${rec.person}（${rec.temple}）`;
+  document.getElementById("a4PageBreakOption").style.display = "none";
+  document.getElementById("a4FilenamePreview").textContent = currentA4Context.filename;
+  updateShareButtonVisibility();
+  refreshA4Preview();
+  document.getElementById("a4PrintModal").classList.add("open");
+}
+
+function openA4PrintFilteredRecords() {
+  const filtered = getFilteredRecords();
+  if (filtered.length === 0) {
+    showToast("目前沒有符合查詢條件的紀錄可轉成 PDF");
+    return;
+  }
+  let fname;
+  if (filtered.length === 1) {
+    fname = makePdfFilename(filtered[0].temple, filtered[0].person, filtered[0].date);
+  } else {
+    const fTemple = document.getElementById("filterTempleRecords").value || "全部宮廟";
+    const fDate = document.getElementById("filterDateRecords").value || new Date().toISOString().slice(0, 10);
+    fname = makePdfFilename(fTemple, `共${filtered.length}人`, fDate);
+  }
+  currentA4Context = {
+    type: "filtered_records",
+    filename: fname
+  };
+  document.getElementById("a4ModalTitle").textContent = `📄 A4 PDF 預覽 — 查詢結果（共 ${filtered.length} 筆）`;
+  document.getElementById("a4PageBreakOption").style.display = filtered.length > 1 ? "inline-flex" : "none";
+  document.getElementById("a4OnePerPageChk").checked = true;
+  document.getElementById("a4FilenamePreview").textContent = currentA4Context.filename;
+  updateShareButtonVisibility();
+  refreshA4Preview();
+  document.getElementById("a4PrintModal").classList.add("open");
+}
+
+function openA4PrintSummary() {
+  const filtered = getSummaryFilteredRecords();
+  if (filtered.length === 0) {
+    showToast("目前沒有資料可供匯出 PDF");
+    return;
+  }
+  const fTemple = document.getElementById("filterTempleSummary").value || "全部宮廟";
+  const fDate = document.getElementById("filterDateSummary").value || new Date().toISOString().slice(0, 10);
+  currentA4Context = {
+    type: "summary",
+    filename: makePdfFilename(fTemple, "彙整總計", fDate)
+  };
+  document.getElementById("a4ModalTitle").textContent = `📄 A4 PDF 預覽 — 彙整總計表`;
+  document.getElementById("a4PageBreakOption").style.display = "none";
+  document.getElementById("a4FilenamePreview").textContent = currentA4Context.filename;
+  updateShareButtonVisibility();
+  refreshA4Preview();
+  document.getElementById("a4PrintModal").classList.add("open");
+}
+
+function refreshA4Preview() {
+  const showCheckCol = document.getElementById("a4ShowCheckColChk").checked;
+  const onePerPage = document.getElementById("a4OnePerPageChk").checked;
+  let contentHtml = "";
+
+  if (currentA4Context.type === "current_form") {
+    contentHtml = buildSingleRecordA4Html(currentA4Context.tempRecord, showCheckCol);
+  } else if (currentA4Context.type === "single") {
+    const rec = records.find(r => r.id === currentA4Context.recordId);
+    contentHtml = rec ? buildSingleRecordA4Html(rec, showCheckCol) : "<p>找不到紀錄</p>";
+  } else if (currentA4Context.type === "filtered_records") {
+    const filtered = getFilteredRecords();
+    contentHtml = filtered.map((r, idx) => {
+      const cls = (onePerPage && idx > 0) ? "a4-page-break" : "";
+      return `<div class="${cls}">${buildSingleRecordA4Html(r, showCheckCol)}</div>`;
+    }).join("");
+  } else if (currentA4Context.type === "summary") {
+    contentHtml = buildSummaryA4Html(showCheckCol);
+  }
+
+  document.getElementById("a4PreviewContent").innerHTML = contentHtml;
+  document.getElementById("a4PrintRoot").innerHTML = `<div class="a4-paper">${contentHtml}</div>`;
+}
+
+function executeA4Print() {
+  refreshA4Preview();
+  if (typeof window.print === "function") {
+    window.print();
+  } else {
+    showToast("此裝置不支援直接列印，請點擊「下載 A4 PDF」");
+  }
+}
+
+// ---------- Pure-JS Offline Canvas-to-A4-PDF Engine ----------
+const PDF_W_PX = 1240; // A4 @ 150 DPI
+const PDF_H_PX = 1754;
+const PDF_PAD_X = 64;
+const PDF_PAD_Y = 64;
+const PDF_CONTENT_W = PDF_W_PX - PDF_PAD_X * 2;
+const PDF_FONT = '"Microsoft JhengHei", "PingFang TC", "Noto Sans TC", "Heiti TC", sans-serif';
+
+function createPdfPageCanvas() {
+  const cv = document.createElement("canvas");
+  cv.width = PDF_W_PX;
+  cv.height = PDF_H_PX;
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(0, 0, PDF_W_PX, PDF_H_PX);
+  ctx.textBaseline = "top";
+  return { cv, ctx, y: PDF_PAD_Y };
+}
+
+function wrapCanvasText(ctx, text, maxWidth) {
+  const str = String(text || "");
+  if (!str) return [""];
+  const paragraphs = str.split("\n");
+  const lines = [];
+  paragraphs.forEach(para => {
+    let line = "";
+    for (let i = 0; i < para.length; i++) {
+      const ch = para[i];
+      const test = line + ch;
+      if (ctx.measureText(test).width > maxWidth && line.length > 0) {
+        lines.push(line);
+        line = ch;
+      } else {
+        line = test;
+      }
+    }
+    lines.push(line);
+  });
+  return lines;
+}
+
+function drawCanvasRoundedRect(ctx, x, y, w, h, r, fillColor, strokeColor) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  if (fillColor) { ctx.fillStyle = fillColor; ctx.fill(); }
+  if (strokeColor) { ctx.strokeStyle = strokeColor; ctx.lineWidth = 1.5; ctx.stroke(); }
+}
+
+function drawTableHeaderOnCanvas(ctx, y, cols) {
+  const rowH = 44;
+  let x = PDF_PAD_X;
+  cols.forEach(col => {
+    ctx.fillStyle = "#2C4A52";
+    ctx.fillRect(x, y, col.w, rowH);
+    ctx.strokeStyle = "#94A3B8";
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(x, y, col.w, rowH);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = `bold 20px ${PDF_FONT}`;
+    ctx.textAlign = "center";
+    ctx.fillText(col.label, x + col.w / 2, y + 11);
+    x += col.w;
+  });
+  ctx.textAlign = "left";
+  return y + rowH;
+}
+
+function renderSingleRecordToPages(pages, r, showCheckCol, forceNewPage) {
+  let page = (!forceNewPage && pages.length > 0) ? pages[pages.length - 1] : null;
+  if (!page || page.y > PDF_H_PX - 380) {
+    page = createPdfPageCanvas();
+    pages.push(page);
+  } else {
+    page.y += 28;
+  }
+
+  const drawDocHeader = (p, isCont) => {
+    const ctx = p.ctx;
+    ctx.fillStyle = "#2C4A52";
+    ctx.font = `bold 32px ${PDF_FONT}`;
+    ctx.textAlign = "left";
+    ctx.fillText(isCont ? "參拜宮廟蓮花個人明細單（續）" : "參拜宮廟蓮花個人明細單", PDF_PAD_X, p.y);
+    ctx.fillStyle = "#4B5563";
+    ctx.font = `18px ${PDF_FONT}`;
+    ctx.textAlign = "right";
+    ctx.fillText(`製表日期：${new Date().toISOString().slice(0, 10)}（${APP_VERSION}）`, PDF_W_PX - PDF_PAD_X, p.y + 12);
+    ctx.textAlign = "left";
+    p.y += 44;
+    ctx.fillStyle = "#2C4A52";
+    ctx.fillRect(PDF_PAD_X, p.y, PDF_CONTENT_W, 4);
+    p.y += 16;
+  };
+
+  drawDocHeader(page, false);
+
+  // Meta bar
+  const metaH = 54;
+  drawCanvasRoundedRect(page.ctx, PDF_PAD_X, page.y, PDF_CONTENT_W, metaH, 8, "#F4F7F7", "#CBD5E1");
+  const metaCols = [
+    `參拜宮廟：${r.temple || "未填寫"}`,
+    `填表人：${r.person || "未填寫"}`,
+    `參拜日期：${r.date || ""}`,
+    `總件數：${r.totalQty || 0} 件`
+  ];
+  const mColW = PDF_CONTENT_W / 4;
+  metaCols.forEach((txt, i) => {
+    page.ctx.fillStyle = i === 3 ? "#B87D4B" : "#1F2933";
+    page.ctx.font = `bold 20px ${PDF_FONT}`;
+    const trimmed = wrapCanvasText(page.ctx, txt, mColW - 18)[0];
+    page.ctx.fillText(trimmed, PDF_PAD_X + i * mColW + 14, page.y + 16);
+  });
+  page.y += metaH + 16;
+
+  // Table columns
+  const cols = showCheckCol
+    ? [
+        { label: "項次", w: 72, align: "center" },
+        { label: "樣式／品項", w: 256, align: "left" },
+        { label: "數量", w: 86, align: "center" },
+        { label: "部位與顏色明細", w: PDF_CONTENT_W - 72 - 256 - 86 - 86, align: "left" },
+        { label: "備料", w: 86, align: "center" }
+      ]
+    : [
+        { label: "項次", w: 72, align: "center" },
+        { label: "樣式／品項", w: 268, align: "left" },
+        { label: "數量", w: 88, align: "center" },
+        { label: "部位與顏色明細", w: PDF_CONTENT_W - 72 - 268 - 88, align: "left" }
+      ];
+
+  page.y = drawTableHeaderOnCanvas(page.ctx, page.y, cols);
+
+  const entries = getRecordEntries(r).filter(ent => SCHEMA_MAP[ent.itemId] && ent.qty > 0);
+  const lineH = 28;
+  const padV = 12;
+
+  if (entries.length === 0) {
+    const h = 46;
+    page.ctx.strokeStyle = "#94A3B8";
+    page.ctx.strokeRect(PDF_PAD_X, page.y, PDF_CONTENT_W, h);
+    page.ctx.fillStyle = "#52606D";
+    page.ctx.font = `20px ${PDF_FONT}`;
+    page.ctx.textAlign = "center";
+    page.ctx.fillText("（無品項明細）", PDF_PAD_X + PDF_CONTENT_W / 2, page.y + 12);
+    page.ctx.textAlign = "left";
+    page.y += h;
+  } else {
+    entries.forEach((ent, idx) => {
+      const it = SCHEMA_MAP[ent.itemId];
+      const detail = formatEntryDetail(it, ent);
+
+      page.ctx.font = `bold 20px ${PDF_FONT}`;
+      const nameLines = wrapCanvasText(page.ctx, it.name, cols[1].w - 20);
+      page.ctx.font = `20px ${PDF_FONT}`;
+      const detailLines = wrapCanvasText(page.ctx, detail, cols[3].w - 22);
+      const maxLines = Math.max(1, nameLines.length, detailLines.length);
+      const rowH = maxLines * lineH + padV * 2;
+
+      if (page.y + rowH > PDF_H_PX - PDF_PAD_Y - 120) {
+        page = createPdfPageCanvas();
+        pages.push(page);
+        drawDocHeader(page, true);
+        page.y = drawTableHeaderOnCanvas(page.ctx, page.y, cols);
+      }
+
+      const bg = idx % 2 === 1 ? "#F8FAFA" : "#FFFFFF";
+      let x = PDF_PAD_X;
+      cols.forEach(c => {
+        page.ctx.fillStyle = bg;
+        page.ctx.fillRect(x, page.y, c.w, rowH);
+        page.ctx.strokeStyle = "#94A3B8";
+        page.ctx.lineWidth = 1.2;
+        page.ctx.strokeRect(x, page.y, c.w, rowH);
+        x += c.w;
+      });
+
+      // Col 0: idx
+      page.ctx.fillStyle = "#1F2933";
+      page.ctx.font = `20px ${PDF_FONT}`;
+      page.ctx.textAlign = "center";
+      page.ctx.fillText(String(idx + 1), PDF_PAD_X + cols[0].w / 2, page.y + (rowH - 22) / 2);
+
+      // Col 1: item name
+      page.ctx.textAlign = "left";
+      page.ctx.font = `bold 20px ${PDF_FONT}`;
+      const nameStartY = page.y + (rowH - nameLines.length * lineH) / 2 + 2;
+      nameLines.forEach((ln, li) => {
+        page.ctx.fillText(ln, PDF_PAD_X + cols[0].w + 10, nameStartY + li * lineH);
+      });
+
+      // Col 2: qty
+      page.ctx.textAlign = "center";
+      page.ctx.fillStyle = "#2C4A52";
+      page.ctx.font = `bold 22px ${PDF_FONT}`;
+      page.ctx.fillText(String(ent.qty), PDF_PAD_X + cols[0].w + cols[1].w + cols[2].w / 2, page.y + (rowH - 24) / 2);
+
+      // Col 3: detail
+      page.ctx.textAlign = "left";
+      page.ctx.fillStyle = "#1F2933";
+      page.ctx.font = `20px ${PDF_FONT}`;
+      const detStartY = page.y + (rowH - detailLines.length * lineH) / 2 + 2;
+      detailLines.forEach((ln, li) => {
+        page.ctx.fillText(ln, PDF_PAD_X + cols[0].w + cols[1].w + cols[2].w + 11, detStartY + li * lineH);
+      });
+
+      // Col 4: checkbox
+      if (showCheckCol) {
+        const cx = PDF_PAD_X + cols[0].w + cols[1].w + cols[2].w + cols[3].w + cols[4].w / 2;
+        page.ctx.strokeStyle = "#4B5563";
+        page.ctx.lineWidth = 2;
+        page.ctx.strokeRect(cx - 11, page.y + (rowH - 22) / 2, 22, 22);
+      }
+
+      page.y += rowH;
+    });
+  }
+
+  page.y += 16;
+
+  // Color summary badges
+  const cMap = getRecordColorStats(r);
+  const usedColors = COLORS.filter(c => cMap[c.name] > 0);
+  if (usedColors.length > 0) {
+    if (page.y + 80 > PDF_H_PX - PDF_PAD_Y) {
+      page = createPdfPageCanvas();
+      pages.push(page);
+    }
+    page.ctx.fillStyle = "#2C4A52";
+    page.ctx.font = `bold 20px ${PDF_FONT}`;
+    page.ctx.fillText("各色使用小計：", PDF_PAD_X, page.y + 6);
+    let bx = PDF_PAD_X + 148;
+    let by = page.y;
+    usedColors.forEach(c => {
+      const label = `${c.name} × ${cMap[c.name]}`;
+      page.ctx.font = `bold 18px ${PDF_FONT}`;
+      const bw = Math.max(82, page.ctx.measureText(label).width + 24);
+      if (bx + bw > PDF_W_PX - PDF_PAD_X) {
+        bx = PDF_PAD_X;
+        by += 40;
+      }
+      drawCanvasRoundedRect(page.ctx, bx, by, bw, 32, 6, c.bg, "#94A3B8");
+      page.ctx.fillStyle = c.fg;
+      page.ctx.textAlign = "center";
+      page.ctx.fillText(label, bx + bw / 2, by + 6);
+      page.ctx.textAlign = "left";
+      bx += bw + 8;
+    });
+    page.y = by + 46;
+  }
+
+  // Note box
+  if (r.note) {
+    page.ctx.font = `20px ${PDF_FONT}`;
+    const noteLines = wrapCanvasText(page.ctx, `其他需求／備註：${r.note}`, PDF_CONTENT_W - 28);
+    const noteH = noteLines.length * 28 + 20;
+    if (page.y + noteH > PDF_H_PX - PDF_PAD_Y - 60) {
+      page = createPdfPageCanvas();
+      pages.push(page);
+    }
+    drawCanvasRoundedRect(page.ctx, PDF_PAD_X, page.y, PDF_CONTENT_W, noteH, 8, "#FAFAFA", "#94A3B8");
+    page.ctx.fillStyle = "#1F2933";
+    noteLines.forEach((ln, li) => {
+      page.ctx.fillText(ln, PDF_PAD_X + 14, page.y + 10 + li * 28);
+    });
+    page.y += noteH + 16;
+  }
+
+  // Footer signature
+  if (page.y + 52 > PDF_H_PX - PDF_PAD_Y) {
+    page = createPdfPageCanvas();
+    pages.push(page);
+  }
+  page.ctx.strokeStyle = "#94A3B8";
+  page.ctx.setLineDash([6, 6]);
+  page.ctx.beginPath();
+  page.ctx.moveTo(PDF_PAD_X, page.y);
+  page.ctx.lineTo(PDF_W_PX - PDF_PAD_X, page.y);
+  page.ctx.stroke();
+  page.ctx.setLineDash([]);
+  page.y += 14;
+  page.ctx.fillStyle = "#4B5563";
+  page.ctx.font = `19px ${PDF_FONT}`;
+  page.ctx.textAlign = "left";
+  page.ctx.fillText("核對人簽名：______________________", PDF_PAD_X, page.y);
+  page.ctx.textAlign = "right";
+  page.ctx.fillText("完成確認：□ 已備料　　□ 已裝箱", PDF_W_PX - PDF_PAD_X, page.y);
+  page.ctx.textAlign = "left";
+  page.y += 34;
+}
+
+function renderSummaryToPages(pages, showCheckCol) {
+  const fTemple = document.getElementById("filterTempleSummary").value;
+  const fDate = document.getElementById("filterDateSummary").value;
+  const filtered = getSummaryFilteredRecords();
+
+  let grandQty = 0;
+  const itemTotals = {};
+  const colorCounts = {};
+  COLORS.forEach(c => { colorCounts[c.name] = 0; });
+  ITEMS_SCHEMA.forEach(it => { itemTotals[it.id] = { name: it.name, qty: 0, details: [] }; });
+
+  filtered.forEach(r => {
+    getRecordEntries(r).forEach(ent => {
+      const it = SCHEMA_MAP[ent.itemId];
+      if (!it || ent.qty <= 0) return;
+      grandQty += ent.qty;
+      itemTotals[it.id].qty += ent.qty;
+      const dateTag = (!fDate && r.date) ? ` [${r.date}]` : "";
+      itemTotals[it.id].details.push(`${r.person}${dateTag} (×${ent.qty})：${formatEntryDetail(it, ent)}`);
+
+      const firstPartKey = it.parts[0].key;
+      const baseColors = (ent.parts && ent.parts[firstPartKey] && ent.parts[firstPartKey].colors) || {};
+      it.parts.forEach(p => {
+        let pst = (ent.parts && ent.parts[p.key]) || null;
+        if (!pst && p.slots && ent.parts && ent.parts.colors) pst = ent.parts.colors;
+        pst = pst || { same: false, colors: {} };
+        if (p.slots && Array.isArray(pst.slots)) {
+          pst.slots.forEach(cName => { if (cName && colorCounts[cName] !== undefined) colorCounts[cName] += ent.qty; });
+        } else {
+          const src = pst.same ? baseColors : (pst.colors || {});
+          Object.entries(src).forEach(([cName, val]) => {
+            if (colorCounts[cName] !== undefined && val > 0) colorCounts[cName] += val * ent.qty;
+          });
+        }
+      });
+    });
+  });
+
+  const titleLabel = `${fTemple || "全部宮廟"}${fDate ? "（" + fDate + "）" : ""}`;
+  let page = createPdfPageCanvas();
+  pages.push(page);
+
+  const drawSumHeader = (p, isCont) => {
+    const ctx = p.ctx;
+    ctx.fillStyle = "#2C4A52";
+    ctx.font = `bold 30px ${PDF_FONT}`;
+    ctx.textAlign = "left";
+    ctx.fillText(`${titleLabel} — 蓮花彙整總計表${isCont ? "（續）" : ""}`, PDF_PAD_X, p.y);
+    ctx.fillStyle = "#4B5563";
+    ctx.font = `18px ${PDF_FONT}`;
+    ctx.textAlign = "right";
+    ctx.fillText(`製表日期：${new Date().toISOString().slice(0, 10)}（${APP_VERSION}）`, PDF_W_PX - PDF_PAD_X, p.y + 10);
+    ctx.textAlign = "left";
+    p.y += 42;
+    ctx.fillStyle = "#2C4A52";
+    ctx.fillRect(PDF_PAD_X, p.y, PDF_CONTENT_W, 4);
+    p.y += 16;
+  };
+
+  drawSumHeader(page, false);
+
+  // Meta bar
+  const metaH = 54;
+  drawCanvasRoundedRect(page.ctx, PDF_PAD_X, page.y, PDF_CONTENT_W, metaH, 8, "#F4F7F7", "#CBD5E1");
+  const metaCols = [
+    `統計範圍：${fTemple || "全部宮廟"}`,
+    `日期範圍：${fDate || "全部日期"}`,
+    `統計筆數：${filtered.length} 筆`,
+    `蓮花總件數：${grandQty} 件`
+  ];
+  const mColW = PDF_CONTENT_W / 4;
+  metaCols.forEach((txt, i) => {
+    page.ctx.fillStyle = i === 3 ? "#B87D4B" : "#1F2933";
+    page.ctx.font = `bold 19px ${PDF_FONT}`;
+    const trimmed = wrapCanvasText(page.ctx, txt, mColW - 18)[0];
+    page.ctx.fillText(trimmed, PDF_PAD_X + i * mColW + 14, page.y + 16);
+  });
+  page.y += metaH + 16;
+
+  const cols = showCheckCol
+    ? [
+        { label: "品項", w: 245, align: "left" },
+        { label: "合計", w: 92, align: "center" },
+        { label: "人員與配色明細", w: PDF_CONTENT_W - 245 - 92 - 84, align: "left" },
+        { label: "備料", w: 84, align: "center" }
+      ]
+    : [
+        { label: "品項", w: 260, align: "left" },
+        { label: "合計", w: 96, align: "center" },
+        { label: "人員與配色明細", w: PDF_CONTENT_W - 260 - 96, align: "left" }
+      ];
+
+  page.y = drawTableHeaderOnCanvas(page.ctx, page.y, cols);
+
+  const lineH = 27;
+  const padV = 12;
+  let rowIdx = 0;
+
+  ITEMS_SCHEMA.forEach(it => {
+    const t = itemTotals[it.id];
+    if (t.qty === 0) return;
+
+    page.ctx.font = `bold 20px ${PDF_FONT}`;
+    const nameLines = wrapCanvasText(page.ctx, t.name, cols[0].w - 20);
+    page.ctx.font = `19px ${PDF_FONT}`;
+    const detailLines = wrapCanvasText(page.ctx, t.details.join("\n"), cols[2].w - 22);
+    const maxLines = Math.max(1, nameLines.length, detailLines.length);
+    const rowH = maxLines * lineH + padV * 2;
+
+    if (page.y + rowH > PDF_H_PX - PDF_PAD_Y - 80) {
+      page = createPdfPageCanvas();
+      pages.push(page);
+      drawSumHeader(page, true);
+      page.y = drawTableHeaderOnCanvas(page.ctx, page.y, cols);
+    }
+
+    const bg = rowIdx % 2 === 1 ? "#F8FAFA" : "#FFFFFF";
+    let x = PDF_PAD_X;
+    cols.forEach(c => {
+      page.ctx.fillStyle = bg;
+      page.ctx.fillRect(x, page.y, c.w, rowH);
+      page.ctx.strokeStyle = "#94A3B8";
+      page.ctx.lineWidth = 1.2;
+      page.ctx.strokeRect(x, page.y, c.w, rowH);
+      x += c.w;
+    });
+
+    page.ctx.textAlign = "left";
+    page.ctx.fillStyle = "#1F2933";
+    page.ctx.font = `bold 20px ${PDF_FONT}`;
+    const nY = page.y + (rowH - nameLines.length * lineH) / 2 + 2;
+    nameLines.forEach((ln, li) => page.ctx.fillText(ln, PDF_PAD_X + 10, nY + li * lineH));
+
+    page.ctx.textAlign = "center";
+    page.ctx.fillStyle = "#2C4A52";
+    page.ctx.font = `bold 23px ${PDF_FONT}`;
+    page.ctx.fillText(String(t.qty), PDF_PAD_X + cols[0].w + cols[1].w / 2, page.y + (rowH - 24) / 2);
+
+    page.ctx.textAlign = "left";
+    page.ctx.fillStyle = "#1F2933";
+    page.ctx.font = `19px ${PDF_FONT}`;
+    const dY = page.y + (rowH - detailLines.length * lineH) / 2 + 2;
+    detailLines.forEach((ln, li) => page.ctx.fillText(ln, PDF_PAD_X + cols[0].w + cols[1].w + 11, dY + li * lineH));
+
+    if (showCheckCol) {
+      const cx = PDF_PAD_X + cols[0].w + cols[1].w + cols[2].w + cols[3].w / 2;
+      page.ctx.strokeStyle = "#4B5563";
+      page.ctx.lineWidth = 2;
+      page.ctx.strokeRect(cx - 11, page.y + (rowH - 22) / 2, 22, 22);
+    }
+
+    page.y += rowH;
+    rowIdx++;
+  });
+
+  page.y += 20;
+
+  // 13-color frequency grid
+  if (page.y + 210 > PDF_H_PX - PDF_PAD_Y) {
+    page = createPdfPageCanvas();
+    pages.push(page);
+  }
+  page.ctx.fillStyle = "#2C4A52";
+  page.ctx.font = `bold 21px ${PDF_FONT}`;
+  page.ctx.fillText("各色使用頻次統計（含同花色自動換算）", PDF_PAD_X, page.y);
+  page.y += 32;
+
+  const gridCols = 7;
+  const gap = 10;
+  const boxW = (PDF_CONTENT_W - gap * (gridCols - 1)) / gridCols;
+  const boxH = 66;
+  COLORS.forEach((c, i) => {
+    const colI = i % gridCols;
+    const rowI = Math.floor(i / gridCols);
+    const bx = PDF_PAD_X + colI * (boxW + gap);
+    const by = page.y + rowI * (boxH + gap);
+    drawCanvasRoundedRect(page.ctx, bx, by, boxW, boxH, 8, c.bg, "#94A3B8");
+    page.ctx.fillStyle = c.fg;
+    page.ctx.textAlign = "center";
+    page.ctx.font = `bold 18px ${PDF_FONT}`;
+    page.ctx.fillText(c.name, bx + boxW / 2, by + 10);
+    page.ctx.font = `bold 24px ${PDF_FONT}`;
+    page.ctx.fillText(String(colorCounts[c.name]), bx + boxW / 2, by + 35);
+    page.ctx.textAlign = "left";
+  });
+  page.y += Math.ceil(COLORS.length / gridCols) * (boxH + gap) + 18;
+
+  // Footer
+  page.ctx.strokeStyle = "#94A3B8";
+  page.ctx.setLineDash([6, 6]);
+  page.ctx.beginPath();
+  page.ctx.moveTo(PDF_PAD_X, page.y);
+  page.ctx.lineTo(PDF_W_PX - PDF_PAD_X, page.y);
+  page.ctx.stroke();
+  page.ctx.setLineDash([]);
+  page.y += 14;
+  page.ctx.fillStyle = "#4B5563";
+  page.ctx.font = `19px ${PDF_FONT}`;
+  page.ctx.fillText("總計核對：______________________", PDF_PAD_X, page.y);
+  page.ctx.textAlign = "right";
+  page.ctx.fillText("備料進度：□ 待備料　□ 製作中　□ 已完成", PDF_W_PX - PDF_PAD_X, page.y);
+  page.ctx.textAlign = "left";
+}
+
+function base64ToUint8Array(base64) {
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+function buildMultiPagePdfBlob(canvases) {
+  const enc = new TextEncoder();
+  const chunks = [];
+  let offset = 0;
+
+  const pushBytes = (u8) => { chunks.push(u8); offset += u8.length; };
+  const pushStr = (s) => pushBytes(enc.encode(s));
+
+  pushStr("%PDF-1.4\n%\xFF\xFF\xFF\xFF\n");
+
+  const objOffsets = [0]; // 1-indexed object offsets
+  const n = canvases.length;
+  const pageIds = [];
+  for (let i = 0; i < n; i++) pageIds.push(5 + i * 3);
+
+  // 1: Catalog
+  objOffsets.push(offset);
+  pushStr("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+
+  // 2: Pages
+  objOffsets.push(offset);
+  pushStr(`2 0 obj\n<< /Type /Pages /Kids [${pageIds.map(id => id + " 0 R").join(" ")}] /Count ${n} >>\nendobj\n`);
+
+  // For each page: Image XObject, Content Stream, Page Object
+  for (let i = 0; i < n; i++) {
+    const cv = canvases[i];
+    const dataUrl = cv.toDataURL("image/jpeg", 0.92);
+    const jpegBytes = base64ToUint8Array(dataUrl.split(",")[1]);
+    const imgId = 3 + i * 3;
+    const contentId = 4 + i * 3;
+    const pageId = 5 + i * 3;
+
+    // Image XObject
+    objOffsets.push(offset);
+    pushStr(`${imgId} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${cv.width} /Height ${cv.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`);
+    pushBytes(jpegBytes);
+    pushStr("\nendstream\nendobj\n");
+
+    // Content Stream (fit image to A4 595 x 842 pt)
+    const streamCmd = "q\n595 0 0 842 0 0 cm\n/Im0 Do\nQ\n";
+    objOffsets.push(offset);
+    pushStr(`${contentId} 0 obj\n<< /Length ${streamCmd.length} >>\nstream\n${streamCmd}endstream\nendobj\n`);
+
+    // Page Object
+    objOffsets.push(offset);
+    pushStr(`${pageId} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /XObject << /Im0 ${imgId} 0 R >> >> /Contents ${contentId} 0 R >>\nendobj\n`);
+  }
+
+  // Cross-reference table
+  const xrefOffset = offset;
+  pushStr(`xref\n0 ${objOffsets.length}\n`);
+  pushStr("0000000000 65535 f \n");
+  for (let id = 1; id < objOffsets.length; id++) {
+    pushStr(String(objOffsets[id]).padStart(10, "0") + " 00000 n \n");
+  }
+  pushStr(`trailer\n<< /Size ${objOffsets.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`);
+
+  return new Blob(chunks, { type: "application/pdf" });
+}
+
+function generateCurrentA4PdfBlob() {
+  const showCheckCol = document.getElementById("a4ShowCheckColChk").checked;
+  const onePerPage = document.getElementById("a4OnePerPageChk").checked;
+  const pages = [];
+
+  if (currentA4Context.type === "current_form") {
+    renderSingleRecordToPages(pages, currentA4Context.tempRecord, showCheckCol, true);
+  } else if (currentA4Context.type === "single") {
+    const rec = records.find(r => r.id === currentA4Context.recordId);
+    if (rec) renderSingleRecordToPages(pages, rec, showCheckCol, true);
+  } else if (currentA4Context.type === "filtered_records") {
+    const filtered = getFilteredRecords();
+    filtered.forEach((r, idx) => {
+      renderSingleRecordToPages(pages, r, showCheckCol, idx === 0 || onePerPage);
+    });
+  } else if (currentA4Context.type === "summary") {
+    renderSummaryToPages(pages, showCheckCol);
+  }
+
+  if (pages.length === 0) return null;
+  return buildMultiPagePdfBlob(pages.map(p => p.cv));
+}
+
+function downloadA4PDF() {
+  const btn = document.getElementById("btnDownloadPdf");
+  const origText = btn ? btn.textContent : "";
+  if (btn) { btn.disabled = true; btn.textContent = "⏳ 產生 PDF 中..."; }
+
+  setTimeout(() => {
+    try {
+      const pdfBlob = generateCurrentA4PdfBlob();
+      if (!pdfBlob) { showToast("無法產生 PDF，請確認有內容"); return; }
+      downloadBlob(pdfBlob, currentA4Context.filename);
+      showToast(`已下載：${currentA4Context.filename}`);
+    } catch (err) {
+      showToast("PDF 產生失敗：" + err.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = origText; }
+    }
+  }, 30);
+}
+
+async function shareA4PDF() {
+  try {
+    const pdfBlob = generateCurrentA4PdfBlob();
+    if (!pdfBlob) return;
+    const file = new File([pdfBlob], currentA4Context.filename, { type: "application/pdf" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: currentA4Context.filename });
+    } else {
+      downloadBlob(pdfBlob, currentA4Context.filename);
+      showToast(`已下載：${currentA4Context.filename}`);
+    }
+  } catch (err) {
+    if (err && err.name !== "AbortError") {
+      showToast("分享取消或裝置不支援，請直接按下載 PDF");
+    }
+  }
+}
+
+// Init
+document.getElementById("appVersionTag").textContent = APP_VERSION;
+syncTopActionBarOffset();
+initPicker();
+loadCloudConfig();
+document.getElementById("metaDate").value = new Date().toISOString().slice(0, 10);
+loadRecords();
+renderForm();
+autoPullIfEmptyOnStartup();
+</script>
+</body>
+</html>
