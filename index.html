@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#2C4A52">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>參拜宮廟蓮花統計工具 v13.0</title>
+<title>參拜宮廟蓮花統計工具 v16.0</title>
 <style>
   :root {
     --primary: #2C4A52;
@@ -190,9 +190,11 @@
     display: flex;
     gap: 8px;
     align-items: stretch;
+    flex-wrap: wrap;
   }
   .picker-row select {
-    flex: 1;
+    flex: 1 1 200px;
+    min-width: 160px;
     padding: 10px 12px;
     border: 1.5px solid var(--primary);
     border-radius: 8px;
@@ -201,6 +203,44 @@
     font-family: inherit;
     background: #fff;
     color: var(--text);
+  }
+  .picker-action-group {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+    flex: 0 0 auto;
+  }
+  .picker-qty-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff;
+    border: 1.5px solid var(--primary);
+    border-radius: 8px;
+    padding: 3px 6px;
+  }
+  .picker-qty-box input {
+    width: 40px;
+    border: none;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    color: var(--text);
+    background: transparent;
+    -moz-appearance: textfield;
+  }
+  .picker-qty-box input:focus { outline: none; }
+  .picker-qty-box input::-webkit-outer-spin-button,
+  .picker-qty-box input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .picker-qty-unit {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    padding-right: 2px;
   }
   .picker-hint {
     font-size: 12px;
@@ -315,7 +355,15 @@
     font-family: inherit;
   }
   .icon-btn-copy { background: #fff; color: var(--primary); border: 1px solid var(--border); }
+  .icon-btn-clear { background: #FFF8EB; color: #9A5B13; border: 1px solid #E6D2B5; }
+  .icon-btn-clear:active { background: #F5E6C8; }
   .icon-btn-del { background: #FDEDEC; color: var(--danger); }
+  .part-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
 
   .item-body {
     padding: 12px 14px;
@@ -1032,7 +1080,7 @@
   <div class="header-top">
     <div class="title-wrap">
       <h1>🪷 蓮花樣式顏色統計工具</h1>
-      <span class="version-tag" id="appVersionTag">v13.0</span>
+      <span class="version-tag" id="appVersionTag">v16.0</span>
     </div>
     <div class="header-right">
       <button type="button" class="cloud-btn" onclick="openCloudModal()" title="Google 試算表雲端同步">
@@ -1097,9 +1145,17 @@
       </div>
       <div class="picker-row">
         <select id="itemPickerSelect"></select>
-        <button type="button" class="btn btn-primary" onclick="addSelectedItem()">＋ 新增品項</button>
+        <div class="picker-action-group">
+          <div class="picker-qty-box" title="一次要新增幾組獨立卡片">
+            <button type="button" class="step-btn" onclick="changePickerCount(-1)">−</button>
+            <input type="number" id="itemPickerCount" value="1" min="1" max="50" oninput="normalizePickerCount()">
+            <span class="picker-qty-unit">組</span>
+            <button type="button" class="step-btn" onclick="changePickerCount(1)">+</button>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="addSelectedItem()">＋ 新增品項</button>
+        </div>
       </div>
-      <div class="picker-hint">💡 需要哪種花再新增即可；同一種樣式若需要「不同配色」，可重複新增多張卡片分別勾選。</div>
+      <div class="picker-hint">💡 可先設定一次要新增幾組（例如選 3 組），系統會一次展開 3 張獨立卡片並標上 #1、#2、#3，方便分別勾選不同配色。</div>
     </div>
 
     <div id="itemsContainer"></div>
@@ -1443,7 +1499,7 @@ ITEMS_SCHEMA.forEach(it => { SCHEMA_MAP[it.id] = it; });
 const COLOR_MAP = {};
 COLORS.forEach(c => { COLOR_MAP[c.name] = c; });
 
-const APP_VERSION = "v13.0";
+const APP_VERSION = "v16.0";
 const STORAGE_KEY = "lotus_tally_records_v1";
 let records = [];
 let editingId = null;
@@ -1519,17 +1575,51 @@ function initPicker() {
   sel.innerHTML = ITEMS_SCHEMA.map(it => `<option value="${it.id}">${it.name}</option>`).join("");
 }
 
+function changePickerCount(delta) {
+  const inp = document.getElementById("itemPickerCount");
+  if (!inp) return;
+  let val = parseInt(inp.value, 10);
+  if (isNaN(val)) val = 1;
+  val = Math.max(1, Math.min(50, val + delta));
+  inp.value = val;
+}
+
+function normalizePickerCount() {
+  const inp = document.getElementById("itemPickerCount");
+  if (!inp || inp.value === "") return;
+  let val = parseInt(inp.value, 10);
+  if (isNaN(val) || val < 1) val = 1;
+  if (val > 50) val = 50;
+  inp.value = val;
+}
+
 function addSelectedItem() {
   const sel = document.getElementById("itemPickerSelect");
+  const countInp = document.getElementById("itemPickerCount");
   const itemId = sel.value;
   if (!itemId || !SCHEMA_MAP[itemId]) return;
-  const entry = createEntry(itemId, 1, true);
-  formEntries.push(entry);
+
+  let count = parseInt(countInp ? countInp.value : "1", 10);
+  if (isNaN(count) || count < 1) count = 1;
+  if (count > 50) count = 50;
+
+  let firstNewEntry = null;
+  for (let i = 0; i < count; i++) {
+    const entry = createEntry(itemId, 1, true);
+    entry.entryId = "ent_" + Date.now() + "_" + i + "_" + Math.random().toString(36).slice(2, 6);
+    formEntries.push(entry);
+    if (i === 0) firstNewEntry = entry;
+  }
+
+  if (countInp) countInp.value = 1;
   renderForm();
-  showToast(`已新增「${SCHEMA_MAP[itemId].name}」`);
+  const itemName = SCHEMA_MAP[itemId].name;
+  showToast(count > 1 ? `已一次新增 ${count} 組「${itemName}」，可個別勾選內容` : `已新增「${itemName}」`);
   setTimeout(() => {
-    const el = document.getElementById("card_" + entry.entryId);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (firstNewEntry) {
+      const el = document.getElementById("card_" + firstNewEntry.entryId);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   }, 50);
 }
 
@@ -1542,6 +1632,26 @@ function duplicateEntry(entryId) {
   formEntries.splice(idx + 1, 0, copy);
   renderForm();
   showToast(`已複製「${SCHEMA_MAP[copy.itemId].name}」`);
+}
+
+function clearEntry(entryId) {
+  const ent = formEntries.find(e => e.entryId === entryId);
+  if (!ent) return;
+  const schema = SCHEMA_MAP[ent.itemId];
+  if (!schema) return;
+  const freshParts = {};
+  schema.parts.forEach(p => {
+    if (p.slots) {
+      freshParts[p.key] = { same: false, colors: {}, slots: Array(p.slots).fill(""), activeSlot: 0 };
+    } else {
+      freshParts[p.key] = { same: false, colors: {} };
+    }
+  });
+  ent.parts = freshParts;
+  ent.note = "";
+  ent.open = true;
+  renderForm();
+  showToast(`已清空「${schema.name}」的配色與備註，可重新選擇`);
 }
 
 function removeEntry(entryId) {
@@ -1670,6 +1780,7 @@ function renderForm() {
           <span class="step-val">${ent.qty}</span>
           <button type="button" class="step-btn" onclick="changeEntryQty('${ent.entryId}', 1)">+</button>
         </div>
+        <button type="button" class="icon-btn icon-btn-clear" onclick="clearEntry('${ent.entryId}')" title="清空此品項所有選擇">清空</button>
         <button type="button" class="icon-btn icon-btn-copy" onclick="duplicateEntry('${ent.entryId}')" title="複製此品項">複製</button>
         <button type="button" class="icon-btn icon-btn-del" onclick="removeEntry('${ent.entryId}')" title="刪除此品項">✕</button>
       </div>
@@ -1823,6 +1934,8 @@ function renderForm() {
           ${part.multi ? '<span class="part-hint">(點一下+1，滿4歸零)</span>' : ''}
         </div>
       `;
+      const partActions = document.createElement("div");
+      partActions.className = "part-top-actions";
       if (part.sameAs) {
         const sBtn = document.createElement("button");
         sBtn.type = "button";
@@ -1833,8 +1946,20 @@ function renderForm() {
           if (pst.same) pst.colors = {};
           renderForm();
         };
-        top.appendChild(sBtn);
+        partActions.appendChild(sBtn);
       }
+      const pClrBtn = document.createElement("button");
+      pClrBtn.type = "button";
+      pClrBtn.className = "slot-mini-btn";
+      pClrBtn.textContent = "清空";
+      pClrBtn.title = `清空「${part.label}」`;
+      pClrBtn.onclick = () => {
+        pst.same = false;
+        pst.colors = {};
+        renderForm();
+      };
+      partActions.appendChild(pClrBtn);
+      top.appendChild(partActions);
       block.appendChild(top);
 
       const grid = document.createElement("div");
@@ -2443,7 +2568,7 @@ function escapeHtml(str) {
 // ==========================================
 const CLOUD_CFG_KEY = "lotus_tally_cloud_cfg_v1";
 const DEFAULT_CLOUD_URL = "https://script.google.com/macros/s/AKfycbzvC1oh0x73r-O8iNTb69Cphgl3hbDbL-zCLsJNp-q98CFYv7NfchMNuadKFGLGpxs5/exec";
-const GAS_CODE_TEXT = '// ==========================================\n// 參拜宮廟蓮花統計工具 — Google 試算表雲端同步腳本\n// ==========================================\nconst SHEET_NAME = "蓮花統計雲端資料";\nconst SYNC_TOKEN = ""; // 選填：若要加密碼保護，請在雙引號內輸入自訂密碼（如 "1234"）\n\nfunction getOrCreateSheet() {\n  const ss = SpreadsheetApp.getActiveSpreadsheet();\n  let sheet = ss.getSheetByName(SHEET_NAME);\n  if (!sheet) {\n    sheet = ss.insertSheet(SHEET_NAME);\n    const headers = ["紀錄ID", "參拜宮廟", "參拜日期", "填表人姓名", "總件數", "品項明細", "個人備註", "最後更新時間", "完整資料JSON"];\n    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);\n    sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#2C4A52").setFontColor("#FFFFFF");\n    sheet.setFrozenRows(1);\n    sheet.setColumnWidth(1, 160);\n    sheet.setColumnWidth(2, 120);\n    sheet.setColumnWidth(3, 110);\n    sheet.setColumnWidth(4, 100);\n    sheet.setColumnWidth(5, 70);\n    sheet.setColumnWidth(6, 360);\n    sheet.setColumnWidth(7, 160);\n    sheet.setColumnWidth(8, 160);\n    sheet.hideColumns(9);\n  }\n  return sheet;\n}\n\nfunction checkToken(token) {\n  if (!SYNC_TOKEN) return true;\n  return String(token || "") === String(SYNC_TOKEN);\n}\n\nfunction jsonOut(obj) {\n  return ContentService\n    .createTextOutput(JSON.stringify(obj))\n    .setMimeType(ContentService.MimeType.JSON);\n}\n\nfunction doGet(e) {\n  try {\n    const params = (e && e.parameter) ? e.parameter : {};\n    if (!checkToken(params.token)) {\n      return jsonOut({ ok: false, error: "同步密碼不正確" });\n    }\n    const action = params.action || "load";\n    const sheet = getOrCreateSheet();\n    if (action === "ping") {\n      return jsonOut({ ok: true, message: "連線成功", count: Math.max(0, sheet.getLastRow() - 1) });\n    }\n    const lastRow = sheet.getLastRow();\n    const records = [];\n    if (lastRow >= 2) {\n      const jsonCol = sheet.getRange(2, 9, lastRow - 1, 1).getValues();\n      for (let i = 0; i < jsonCol.length; i++) {\n        if (jsonCol[i][0]) {\n          try { records.push(JSON.parse(jsonCol[i][0])); } catch (err) {}\n        }\n      }\n    }\n    return jsonOut({ ok: true, records: records, count: records.length });\n  } catch (err) {\n    return jsonOut({ ok: false, error: String(err) });\n  }\n}\n\nfunction doPost(e) {\n  try {\n    const body = JSON.parse(e.postData.contents || "{}");\n    if (!checkToken(body.token)) {\n      return jsonOut({ ok: false, error: "同步密碼不正確" });\n    }\n    const records = Array.isArray(body.records) ? body.records : [];\n    const sheet = getOrCreateSheet();\n    const lastRow = sheet.getLastRow();\n    if (lastRow >= 2) {\n      sheet.getRange(2, 1, lastRow - 1, 9).clearContent();\n    }\n    if (records.length > 0) {\n      const rows = records.map(function(r) {\n        return [\n          r.id || "",\n          r.temple || "",\n          r.date || "",\n          r.person || "",\n          r.totalQty || 0,\n          r.summaryText || "",\n          r.note || "",\n          r.updatedAt || "",\n          JSON.stringify(r)\n        ];\n      });\n      sheet.getRange(2, 1, rows.length, 9).setValues(rows);\n    }\n    return jsonOut({ ok: true, saved: records.length });\n  } catch (err) {\n    return jsonOut({ ok: false, error: String(err) });\n  }\n}';
+const GAS_CODE_TEXT = '// ==========================================\n// 參拜宮廟蓮花統計工具 — Google 試算表雲端同步腳本\n// ==========================================\nconst SHEET_NAME = "蓮花統計雲端資料";\nconst SYNC_TOKEN = ""; // 選填：若要加密碼保護，請在雙引號內輸入自訂密碼（如 "1234"）\n\nfunction getOrCreateSheet() {\n  const ss = SpreadsheetApp.getActiveSpreadsheet();\n  let sheet = ss.getSheetByName(SHEET_NAME);\n  if (!sheet) {\n    sheet = ss.insertSheet(SHEET_NAME);\n    const headers = ["紀錄ID", "參拜宮廟", "參拜日期", "填表人姓名", "總件數", "品項明細", "個人備註", "最後更新時間", "完整資料JSON"];\n    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);\n    sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#2C4A52").setFontColor("#FFFFFF");\n    sheet.setFrozenRows(1);\n    sheet.setColumnWidth(1, 160);\n    sheet.setColumnWidth(2, 120);\n    sheet.setColumnWidth(3, 110);\n    sheet.setColumnWidth(4, 100);\n    sheet.setColumnWidth(5, 70);\n    sheet.setColumnWidth(6, 360);\n    sheet.setColumnWidth(7, 160);\n    sheet.setColumnWidth(8, 160);\n    sheet.hideColumns(9);\n  }\n  return sheet;\n}\n\nfunction checkToken(token) {\n  if (!SYNC_TOKEN) return true;\n  return String(token || "") === String(SYNC_TOKEN);\n}\n\nfunction jsonOut(obj) {\n  return ContentService\n    .createTextOutput(JSON.stringify(obj))\n    .setMimeType(ContentService.MimeType.JSON);\n}\n\nfunction doGet(e) {\n  try {\n    const params = (e && e.parameter) ? e.parameter : {};\n    if (!checkToken(params.token)) {\n      return jsonOut({ ok: false, error: "同步密碼不正確" });\n    }\n    const action = params.action || "load";\n    const sheet = getOrCreateSheet();\n    if (action === "ping") {\n      return jsonOut({ ok: true, message: "連線成功", count: Math.max(0, sheet.getLastRow() - 1) });\n    }\n    const lastRow = sheet.getLastRow();\n    const records = [];\n    if (lastRow >= 2) {\n      const jsonCol = sheet.getRange(2, 9, lastRow - 1, 1).getValues();\n      for (let i = 0; i < jsonCol.length; i++) {\n        if (jsonCol[i][0]) {\n          try { records.push(JSON.parse(jsonCol[i][0])); } catch (err) {}\n        }\n      }\n    }\n    return jsonOut({ ok: true, records: records, count: records.length });\n  } catch (err) {\n    return jsonOut({ ok: false, error: String(err) });\n  }\n}\n\nfunction generateA4PdfFile(body) {\n  const folderName = "蓮花A4_PDF暫存區";\n  const folders = DriveApp.getFoldersByName(folderName);\n  const folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);\n  const cutoff = new Date().getTime() - 24 * 60 * 60 * 1000;\n  const oldFiles = folder.getFiles();\n  while (oldFiles.hasNext()) {\n    const f = oldFiles.next();\n    if (f.getDateCreated().getTime() < cutoff) f.setTrashed(true);\n  }\n  const title = String(body.title || "參拜宮廟蓮花統計表");\n  const subtitle = String(body.subtitle || "");\n  const metaItems = Array.isArray(body.metaItems) ? body.metaItems : [];\n  const headers = Array.isArray(body.headers) ? body.headers : [];\n  const rows = Array.isArray(body.rows) ? body.rows : [];\n  const colorSummary = Array.isArray(body.colorSummary) ? body.colorSummary : [];\n  const note = String(body.note || "");\n  const esc = function(s) { return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); };\n  let metaHtml = metaItems.length > 0 ? "<div class=\\"meta\\">" + metaItems.map(function(m) { return "<span>" + esc(m) + "</span>"; }).join("") + "</div>" : "";\n  let thHtml = headers.map(function(h) { return "<th>" + esc(h) + "</th>"; }).join("");\n  let trHtml = rows.map(function(r) {\n    return "<tr>" + r.map(function(cell, idx) {\n      const cls = (idx === 0 || idx === 2 || cell === "□") ? " class=\\"c\\"" : "";\n      return "<td" + cls + ">" + esc(cell) + "</td>";\n    }).join("") + "</tr>";\n  }).join("");\n  let colorHtml = colorSummary.length > 0 ? "<div class=\\"colors\\"><b>各色使用統計：</b>" + colorSummary.map(function(c) { return "<span class=\\"badge\\">" + esc(c) + "</span>"; }).join("") + "</div>" : "";\n  let noteHtml = note ? "<div class=\\"note\\"><b>其他需求／備註：</b>" + esc(note) + "</div>" : "";\n  const fullHtml = "<!DOCTYPE html><html><head><meta charset=\\"UTF-8\\"><style>" +\n    "@page{size:A4 portrait;margin:10mm 12mm;}" +\n    "body{font-family:Noto Sans TC,Microsoft JhengHei,sans-serif;font-size:10.5pt;color:#111;margin:0;}" +\n    ".hdr{border-bottom:2px solid #2C4A52;padding-bottom:6px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-end;}" +\n    ".hdr h1{font-size:16pt;color:#2C4A52;margin:0;}" +\n    ".sub{font-size:9pt;color:#555;}" +\n    ".meta{border:1px solid #94A3B8;background:#F4F7F7;padding:7px 10px;margin-bottom:10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:10pt;}" +\n    "table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:9.8pt;}" +\n    "th{background:#2C4A52;color:#fff;padding:6px;border:1px solid #94A3B8;text-align:center;}" +\n    "td{padding:6px;border:1px solid #94A3B8;vertical-align:top;}" +\n    "td.c{text-align:center;font-weight:bold;}" +\n    "tr:nth-child(even) td{background:#F8FAFA;}" +\n    ".colors{margin-bottom:10px;font-size:9.5pt;line-height:1.8;}" +\n    ".badge{display:inline-block;border:1px solid #94A3B8;border-radius:4px;padding:1px 7px;margin-right:5px;background:#FAFAFA;font-weight:bold;}" +\n    ".note{border:1px solid #94A3B8;padding:7px 10px;margin-bottom:10px;background:#FAFAFA;}" +\n    ".ftr{border-top:1px dashed #94A3B8;padding-top:8px;margin-top:12px;display:flex;justify-content:space-between;font-size:9.5pt;color:#444;}" +\n    "</style></head><body>" +\n    "<div class=\\"hdr\\"><h1>" + esc(title) + "</h1><span class=\\"sub\\">" + esc(subtitle) + "</span></div>" +\n    metaHtml + "<table><thead><tr>" + thHtml + "</tr></thead><tbody>" + trHtml + "</tbody></table>" +\n    colorHtml + noteHtml +\n    "<div class=\\"ftr\\"><span>核對人簽名：________________</span><span>完成確認：□ 已備料　□ 已裝箱</span></div>" +\n    "</body></html>";\n  const fname = String(body.filename || "蓮花統計.pdf");\n  const htmlBlob = Utilities.newBlob(fullHtml, "text/html", "temp.html");\n  const pdfBlob = htmlBlob.getAs("application/pdf").setName(fname);\n  const file = folder.createFile(pdfBlob);\n  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);\n  return { ok: true, downloadUrl: "https://drive.google.com/uc?export=download&id=" + file.getId(), fileName: fname };\n}\n\nfunction doPost(e) {\n  try {\n    const body = JSON.parse(e.postData.contents || "{}");\n    if (!checkToken(body.token)) {\n      return jsonOut({ ok: false, error: "同步密碼不正確" });\n    }\n    if (body.action === "generatePdf") {\n      return jsonOut(generateA4PdfFile(body));\n    }\n    const records = Array.isArray(body.records) ? body.records : [];\n    const sheet = getOrCreateSheet();\n    const lastRow = sheet.getLastRow();\n    if (lastRow >= 2) {\n      sheet.getRange(2, 1, lastRow - 1, 9).clearContent();\n    }\n    if (records.length > 0) {\n      const rows = records.map(function(r) {\n        return [\n          r.id || "",\n          r.temple || "",\n          r.date || "",\n          r.person || "",\n          r.totalQty || 0,\n          r.summaryText || "",\n          r.note || "",\n          r.updatedAt || "",\n          JSON.stringify(r)\n        ];\n      });\n      sheet.getRange(2, 1, rows.length, 9).setValues(rows);\n    }\n    return jsonOut({ ok: true, saved: records.length });\n  } catch (err) {\n    return jsonOut({ ok: false, error: String(err) });\n  }\n}';
 
 let cloudCfg = { url: DEFAULT_CLOUD_URL, token: "", autoSync: true, lastSync: "" };
 
@@ -3600,23 +3725,178 @@ function generateCurrentA4PdfBlob() {
   return buildMultiPagePdfBlob(pages.map(p => p.cv));
 }
 
-function downloadA4PDF() {
+function isAndroidApkWebView() {
+  const ua = navigator.userAgent || "";
+  return /Android/i.test(ua) && (/; wv\)/i.test(ua) || /Version\/\d+\.\d+/i.test(ua));
+}
+
+function buildCurrentA4StructuredPayload() {
+  const showCheckCol = document.getElementById("a4ShowCheckColChk").checked;
+  const dateNow = new Date().toISOString().slice(0, 10);
+
+  if (currentA4Context.type === "current_form" || currentA4Context.type === "single") {
+    const r = currentA4Context.type === "current_form"
+      ? currentA4Context.tempRecord
+      : records.find(x => x.id === currentA4Context.recordId);
+    if (!r) return null;
+    const headers = showCheckCol
+      ? ["項次", "樣式／品項", "數量", "部位與顏色明細", "備料"]
+      : ["項次", "樣式／品項", "數量", "部位與顏色明細"];
+    const entries = getRecordEntries(r).filter(ent => SCHEMA_MAP[ent.itemId] && ent.qty > 0);
+    const rows = entries.map((ent, idx) => {
+      const it = SCHEMA_MAP[ent.itemId];
+      const base = [String(idx + 1), it.name, String(ent.qty), formatEntryDetail(it, ent)];
+      if (showCheckCol) base.push("□");
+      return base;
+    });
+    const cMap = getRecordColorStats(r);
+    const colorSummary = COLORS.filter(c => cMap[c.name] > 0).map(c => `${c.name} × ${cMap[c.name]}`);
+    return {
+      title: "參拜宮廟蓮花個人明細單",
+      subtitle: `製表日期：${dateNow}（${APP_VERSION}）`,
+      metaItems: [
+        `參拜宮廟：${r.temple || "未填寫"}`,
+        `填表人：${r.person || "未填寫"}`,
+        `參拜日期：${r.date || ""}`,
+        `總件數：${r.totalQty || 0} 件`
+      ],
+      headers,
+      rows,
+      colorSummary,
+      note: r.note || "",
+      filename: currentA4Context.filename
+    };
+  }
+
+  if (currentA4Context.type === "filtered_records") {
+    const filtered = getFilteredRecords();
+    if (filtered.length === 0) return null;
+    const headers = showCheckCol
+      ? ["項次", "姓名／日期", "數量", "品項與配色明細", "備料"]
+      : ["項次", "姓名／日期", "數量", "品項與配色明細"];
+    const rows = [];
+    let idx = 1;
+    filtered.forEach(r => {
+      getRecordEntries(r).forEach(ent => {
+        const it = SCHEMA_MAP[ent.itemId];
+        if (!it || ent.qty <= 0) return;
+        const base = [
+          String(idx++),
+          `${r.person}（${r.temple}・${r.date}）`,
+          String(ent.qty),
+          `${it.name}：${formatEntryDetail(it, ent)}`
+        ];
+        if (showCheckCol) base.push("□");
+        rows.push(base);
+      });
+    });
+    return {
+      title: "參拜宮廟蓮花查詢明細表",
+      subtitle: `共 ${filtered.length} 筆紀錄・製表日期：${dateNow}`,
+      metaItems: [`篩選宮廟：${document.getElementById("filterTempleRecords").value || "全部宮廟"}`, `篩選日期：${document.getElementById("filterDateRecords").value || "全部日期"}`],
+      headers,
+      rows,
+      colorSummary: [],
+      note: "",
+      filename: currentA4Context.filename
+    };
+  }
+
+  if (currentA4Context.type === "summary") {
+    const fTemple = document.getElementById("filterTempleSummary").value;
+    const fDate = document.getElementById("filterDateSummary").value;
+    const filtered = getSummaryFilteredRecords();
+    if (filtered.length === 0) return null;
+    let grandQty = 0;
+    const itemTotals = {};
+    const colorCounts = {};
+    COLORS.forEach(c => { colorCounts[c.name] = 0; });
+    ITEMS_SCHEMA.forEach(it => { itemTotals[it.id] = { name: it.name, qty: 0, details: [] }; });
+    filtered.forEach(r => {
+      getRecordEntries(r).forEach(ent => {
+        const it = SCHEMA_MAP[ent.itemId];
+        if (!it || ent.qty <= 0) return;
+        grandQty += ent.qty;
+        itemTotals[it.id].qty += ent.qty;
+        const dateTag = (!fDate && r.date) ? ` [${r.date}]` : "";
+        itemTotals[it.id].details.push(`${r.person}${dateTag} (×${ent.qty})：${formatEntryDetail(it, ent)}`);
+        const firstPartKey = it.parts[0].key;
+        const baseColors = (ent.parts && ent.parts[firstPartKey] && ent.parts[firstPartKey].colors) || {};
+        it.parts.forEach(p => {
+          let pst = (ent.parts && ent.parts[p.key]) || null;
+          if (!pst && p.slots && ent.parts && ent.parts.colors) pst = ent.parts.colors;
+          pst = pst || { same: false, colors: {} };
+          if (p.slots && Array.isArray(pst.slots)) {
+            pst.slots.forEach(cName => { if (cName && colorCounts[cName] !== undefined) colorCounts[cName] += ent.qty; });
+          } else {
+            const src = pst.same ? baseColors : (pst.colors || {});
+            Object.entries(src).forEach(([cName, val]) => {
+              if (colorCounts[cName] !== undefined && val > 0) colorCounts[cName] += val * ent.qty;
+            });
+          }
+        });
+      });
+    });
+    const headers = showCheckCol
+      ? ["品項", "合計", "人員與配色明細", "備料"]
+      : ["品項", "合計", "人員與配色明細"];
+    const rows = ITEMS_SCHEMA.filter(it => itemTotals[it.id].qty > 0).map(it => {
+      const t = itemTotals[it.id];
+      const base = [t.name, String(t.qty), t.details.join("；")];
+      if (showCheckCol) base.push("□");
+      return base;
+    });
+    const colorSummary = COLORS.filter(c => colorCounts[c.name] > 0).map(c => `${c.name} × ${colorCounts[c.name]}`);
+    return {
+      title: `${fTemple || "全部宮廟"}${fDate ? "（" + fDate + "）" : ""} — 蓮花彙整總計表`,
+      subtitle: `製表日期：${dateNow}（${APP_VERSION}）`,
+      metaItems: [`統計筆數：${filtered.length} 筆`, `蓮花總件數：${grandQty} 件`],
+      headers,
+      rows,
+      colorSummary,
+      note: "",
+      filename: currentA4Context.filename
+    };
+  }
+  return null;
+}
+
+async function downloadA4PDF() {
   const btn = document.getElementById("btnDownloadPdf");
   const origText = btn ? btn.textContent : "";
   if (btn) { btn.disabled = true; btn.textContent = "⏳ 產生 PDF 中..."; }
 
-  setTimeout(() => {
-    try {
-      const pdfBlob = generateCurrentA4PdfBlob();
-      if (!pdfBlob) { showToast("無法產生 PDF，請確認有內容"); return; }
-      downloadBlob(pdfBlob, currentA4Context.filename);
-      showToast(`已下載：${currentA4Context.filename}`);
-    } catch (err) {
-      showToast("PDF 產生失敗：" + err.message);
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = origText; }
+  try {
+    if (isAndroidApkWebView() && cloudCfg.url) {
+      const payload = buildCurrentA4StructuredPayload();
+      if (!payload) { showToast("無法產生 PDF，請確認有內容"); return; }
+      showToast("⏳ 正在透過雲端產生標準 A4 PDF，請稍候...");
+      const resp = await fetch(cloudCfg.url, {
+        method: "POST",
+        redirect: "follow",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(Object.assign({ action: "generatePdf", token: cloudCfg.token || "" }, payload))
+      });
+      const data = await resp.json();
+      if (data.ok && data.downloadUrl) {
+        showToast("✅ 已開始下載 A4 PDF，請從手機通知列開啟檢視");
+        window.location.href = data.downloadUrl;
+        return;
+      } else {
+        throw new Error(data.error || "雲端腳本尚未更新至 v16.0");
+      }
     }
-  }, 30);
+
+    await new Promise(r => setTimeout(r, 30));
+    const pdfBlob = generateCurrentA4PdfBlob();
+    if (!pdfBlob) { showToast("無法產生 PDF，請確認有內容"); return; }
+    downloadBlob(pdfBlob, currentA4Context.filename);
+    showToast(`已下載：${currentA4Context.filename}`);
+  } catch (err) {
+    showToast("PDF 產生失敗：" + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = origText; }
+  }
 }
 
 async function shareA4PDF() {
