@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#2C4A52">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>參拜宮廟蓮花統計工具 v16.0</title>
+<title>參拜宮廟蓮花統計工具 v17.0</title>
 <style>
   :root {
     --primary: #2C4A52;
@@ -570,6 +570,75 @@
     font-size: 13px;
     font-family: inherit;
   }
+  .item-done-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .done-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    background: #F8FAFC;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 11px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.12s;
+  }
+  .done-toggle-label.checked {
+    background: #D4EFDF;
+    color: #1E8449;
+    border-color: #82E0AA;
+  }
+  .done-toggle-label input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #1E8449;
+    cursor: pointer;
+  }
+  .item-card.is-done {
+    border-color: #27AE60;
+  }
+  .item-card.is-done .item-header {
+    background: #E2F4EA;
+  }
+  .done-pill-header {
+    background: #1E8449;
+    color: #fff;
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 12px;
+    font-weight: 700;
+  }
+  .tag-done {
+    background: #EAFAF1;
+    border-color: #A9DFBF;
+  }
+  .record-item-chk {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .record-item-chk input {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    accent-color: #1E8449;
+    cursor: pointer;
+  }
 
   /* Top Sticky Form Action Bar (avoids overlapping Android bottom nav bar) */
   .top-action-bar {
@@ -1080,7 +1149,7 @@
   <div class="header-top">
     <div class="title-wrap">
       <h1>🪷 蓮花樣式顏色統計工具</h1>
-      <span class="version-tag" id="appVersionTag">v16.0</span>
+      <span class="version-tag" id="appVersionTag">v17.0</span>
     </div>
     <div class="header-right">
       <button type="button" class="cloud-btn" onclick="openCloudModal()" title="Google 試算表雲端同步">
@@ -1499,7 +1568,7 @@ ITEMS_SCHEMA.forEach(it => { SCHEMA_MAP[it.id] = it; });
 const COLOR_MAP = {};
 COLORS.forEach(c => { COLOR_MAP[c.name] = c; });
 
-const APP_VERSION = "v16.0";
+const APP_VERSION = "v17.0";
 const STORAGE_KEY = "lotus_tally_records_v1";
 let records = [];
 let editingId = null;
@@ -1520,6 +1589,7 @@ function createEntry(itemId, qty = 1, open = true) {
     itemId,
     qty,
     open,
+    done: false,
     note: "",
     parts
   };
@@ -1561,6 +1631,7 @@ function getRecordEntries(rec) {
           entryId: "legacy_" + it.id,
           itemId: it.id,
           qty: d.qty,
+          done: !!d.done,
           note: d.note || "",
           parts: d.parts || {}
         });
@@ -1648,6 +1719,7 @@ function clearEntry(entryId) {
     }
   });
   ent.parts = freshParts;
+  ent.done = false;
   ent.note = "";
   ent.open = true;
   renderForm();
@@ -1760,7 +1832,7 @@ function renderForm() {
 
     const card = document.createElement("div");
     card.id = "card_" + ent.entryId;
-    card.className = "item-card" + (ent.open ? " open" : "");
+    card.className = "item-card" + (ent.open ? " open" : "") + (ent.done ? " is-done" : "");
 
     const header = document.createElement("div");
     header.className = "item-header";
@@ -1769,9 +1841,10 @@ function renderForm() {
       ent.open = !ent.open;
       renderForm();
     };
+    const doneHeaderBadge = ent.done ? `<span class="done-pill-header">✓ 已完成</span>` : "";
     header.innerHTML = `
       <div class="item-name-wrap">
-        <span class="item-name">${ent.open ? "▾" : "▸"} ${item.name} ${seqHtml}</span>
+        <span class="item-name">${ent.open ? "▾" : "▸"} ${item.name} ${seqHtml} ${doneHeaderBadge}</span>
         <span class="item-sub">${item.sub}</span>
       </div>
       <div class="header-controls">
@@ -1991,6 +2064,24 @@ function renderForm() {
       body.appendChild(block);
     });
 
+    const doneBar = document.createElement("div");
+    doneBar.className = "item-done-bar";
+    const doneLabel = document.createElement("label");
+    doneLabel.className = "done-toggle-label" + (ent.done ? " checked" : "");
+    const doneChk = document.createElement("input");
+    doneChk.type = "checkbox";
+    doneChk.checked = !!ent.done;
+    doneChk.onchange = () => {
+      ent.done = doneChk.checked;
+      renderForm();
+    };
+    const doneSpan = document.createElement("span");
+    doneSpan.textContent = ent.done ? "已完成（已勾選備註）" : "勾選標記為「已完成」";
+    doneLabel.appendChild(doneChk);
+    doneLabel.appendChild(doneSpan);
+    doneBar.appendChild(doneLabel);
+    body.appendChild(doneBar);
+
     const noteInp = document.createElement("input");
     noteInp.className = "item-note-input";
     noteInp.placeholder = "此品項備註（如配色順序：金白紅、黃白…、其他顏色說明）";
@@ -2033,6 +2124,7 @@ function saveCurrentRecord() {
     entryId: e.entryId,
     itemId: e.itemId,
     qty: e.qty,
+    done: !!e.done,
     note: e.note || "",
     parts: JSON.parse(JSON.stringify(e.parts))
   }));
@@ -2097,7 +2189,13 @@ function formatEntryDetail(item, ent) {
     if (txt) partsDesc.push(`${p.label.replace(/ \(.*\)/, "")}:${txt}`);
   });
   let res = partsDesc.join(" / ");
-  if (ent.note) res += (res ? `（${ent.note}）` : ent.note);
+  const noteParts = [];
+  if (ent.done) noteParts.push("✓已完成");
+  if (ent.note) noteParts.push(ent.note);
+  if (noteParts.length > 0) {
+    const noteStr = noteParts.join("；");
+    res += (res ? `（${noteStr}）` : noteStr);
+  }
   return res || "未指定顏色";
 }
 
@@ -2163,10 +2261,16 @@ function renderRecords() {
 
   list.innerHTML = filtered.map(r => {
     const entries = getRecordEntries(r);
-    const tags = entries.map(ent => {
+    const tags = entries.map((ent, entIdx) => {
       const it = SCHEMA_MAP[ent.itemId];
       if (!it) return "";
-      return `<span class="tag"><b>${it.name}×${ent.qty}</b>：${escapeHtml(formatEntryDetail(it, ent))}</span>`;
+      const isDone = !!ent.done;
+      return `<span class="tag ${isDone ? "tag-done" : ""}">
+        <label class="record-item-chk" title="勾選或取消標記此品項為已完成">
+          <input type="checkbox" ${isDone ? "checked" : ""} onchange="toggleRecordEntryDone('${r.id}', ${entIdx}, this.checked)">
+          <b>${it.name}×${ent.qty}</b>
+        </label>：${escapeHtml(formatEntryDetail(it, ent))}
+      </span>`;
     }).join("");
     return `
       <div class="record-card">
@@ -2326,6 +2430,21 @@ function editRecord(id) {
   renderForm();
   switchTab("form");
   showToast(`正在編輯「${rec.person}」`);
+}
+
+function toggleRecordEntryDone(recId, entIdx, checked) {
+  const rec = records.find(r => r.id === recId);
+  if (!rec) return;
+  const entries = getRecordEntries(rec);
+  if (!entries[entIdx]) return;
+  entries[entIdx].done = !!checked;
+  rec.entries = entries;
+  rec.updatedAt = new Date().toISOString();
+  persistRecords();
+  autoSyncIfEnabled();
+  renderRecords();
+  const itName = (SCHEMA_MAP[entries[entIdx].itemId] && SCHEMA_MAP[entries[entIdx].itemId].name) || "品項";
+  showToast(checked ? `✅ 已標記「${rec.person} - ${itName}」為已完成` : `已取消「${rec.person} - ${itName}」的已完成標記`);
 }
 
 function deleteRecord(id) {
@@ -2867,7 +2986,7 @@ function buildSingleRecordA4Html(r, showCheckCol) {
         <td style="width:24%; font-weight:700;">${escapeHtml(it.name)}</td>
         <td class="c" style="width:9%; font-weight:700;">${ent.qty}</td>
         <td>${escapeHtml(formatEntryDetail(it, ent))}</td>
-        ${showCheckCol ? '<td class="c" style="width:9%; font-size:15px;">□</td>' : ''}
+        ${showCheckCol ? `<td class="c" style="width:9%; font-size:15px;">${ent.done ? '☑' : '□'}</td>` : ''}
       </tr>
     `;
   }).join("");
@@ -3746,7 +3865,7 @@ function buildCurrentA4StructuredPayload() {
     const rows = entries.map((ent, idx) => {
       const it = SCHEMA_MAP[ent.itemId];
       const base = [String(idx + 1), it.name, String(ent.qty), formatEntryDetail(it, ent)];
-      if (showCheckCol) base.push("□");
+      if (showCheckCol) base.push(ent.done ? "☑" : "□");
       return base;
     });
     const cMap = getRecordColorStats(r);
@@ -3786,7 +3905,7 @@ function buildCurrentA4StructuredPayload() {
           String(ent.qty),
           `${it.name}：${formatEntryDetail(it, ent)}`
         ];
-        if (showCheckCol) base.push("□");
+        if (showCheckCol) base.push(ent.done ? "☑" : "□");
         rows.push(base);
       });
     });
